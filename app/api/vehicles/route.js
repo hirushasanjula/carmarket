@@ -7,6 +7,8 @@ import { auth } from "@/auth";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export async function POST(request) {
+  // POST code remains unchanged
+  // Your existing POST implementation
   let connection;
   try {
     console.log("Vehicle API route called");
@@ -173,36 +175,53 @@ export async function POST(request) {
 export async function GET(request) {
   let connection;
   try {
-    // Check URL parameters
-    const url = new URL(request.url);
-    const userOnly = url.searchParams.get("userOnly") === "true";
-    
     // Get the authenticated user
     const session = await auth();
+    
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: "You must be logged in to view listings" }, 
+        { status: 401 }
+      );
+    }
     
     // Connect to the database
     connection = await connectToDatabase();
     
-    let query = {};
-    
-    // If userOnly is true, only show the current user's vehicles
-    if (userOnly && session?.user?.email) {
-      // First find the user by email
-      const User = require("@/models/user");
-      const user = await User.findOne({ email: session.user.email });
-      
-      if (user) {
-        query.user = user._id;
-      } else {
-        // If no user found, return empty array
-        return NextResponse.json([], { status: 200 });
-      }
+    // Get the user to filter by their ID
+    const userEmail = session.user.email;
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: "User email not found in session" },
+        { status: 400 }
+      );
     }
     
-    // Find vehicles with the query
+    // Find the user by email to get their MongoDB ID
+    const user = await User.findOne({ email: userEmail });
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found in database" },
+        { status: 404 }
+      );
+    }
+    
+    // Check if we need to filter by user (for user's own listings)
+    // Add a query parameter check to determine if we want all vehicles or just the user's
+    const url = new URL(request.url);
+    const showAll = url.searchParams.get('showAll') === 'true';
+    
+    let query = {};
+    if (!showAll) {
+      // Only show the user's own vehicles if not explicitly showing all
+      query = { user: user._id };
+    }
+    
+    // Sort by newest first
     const vehicles = await Vehicle.find(query)
-      .sort({ createdAt: -1 }) // Sort by newest first
-      .populate("user", "name email") // Populate user details if needed
+      .sort({ createdAt: -1 })
+      .populate("user", "name email")
       .exec();
     
     return NextResponse.json(vehicles, { status: 200 });

@@ -1,5 +1,4 @@
 // app/api/vehicles/[id]/route.js
-
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import Vehicle from "@/models/vehicle";
@@ -13,6 +12,16 @@ export async function GET(request, { params }) {
   try {
     const { id } = params;
     
+    // Get the authenticated user
+    const session = await auth();
+    
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: "You must be logged in to view this vehicle" },
+        { status: 401 }
+      );
+    }
+    
     // Connect to the database
     connection = await connectToDatabase();
     
@@ -25,6 +34,8 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
+    
+    // Remove the owner check to allow all authenticated users to view the vehicle
     
     // Increment views count (optional)
     vehicle.views = (vehicle.views || 0) + 1;

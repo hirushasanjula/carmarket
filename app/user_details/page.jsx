@@ -3,37 +3,46 @@
 import React, { useState, useEffect } from "react";
 import { PencilIcon, StarIcon, EyeIcon, BookmarkIcon, TrashIcon } from "lucide-react";
 import EditVehicleModal from "@/components/Edit Box";
-import DeleteButton from "@/components/DeleteButton"; // Import the new component
+import DeleteButton from "@/components/DeleteButton";
+import { useSession } from "next-auth/react"; // Import useSession
 
 const VehicleListings = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const { data: session, status } = useSession(); // Get session info
 
   useEffect(() => {
-    // Fetch vehicles data from your API
-    const fetchVehicles = async () => {
-      try {
-        const response = await fetch('/api/vehicles');
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch vehicles: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log("Fetched vehicles:", data);
-        setVehicles(Array.isArray(data) ? data : (data.vehicles || []));
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching vehicles:", error);
-        setError(error.message);
-        setLoading(false);
-      }
-    };
+    // Only fetch vehicles if user is authenticated
+    if (status === "authenticated") {
+      fetchVehicles();
+    } else if (status === "unauthenticated") {
+      // If user is not authenticated, show error or redirect
+      setError("You must be logged in to view your listings");
+      setLoading(false);
+    }
+  }, [status]);
 
-    fetchVehicles();
-  }, []);
+  const fetchVehicles = async () => {
+    try {
+      // Use the default endpoint without showAll=true to only get the user's vehicles
+      const response = await fetch('/api/vehicles');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch vehicles: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log("Fetched vehicles:", data);
+      setVehicles(Array.isArray(data) ? data : (data.vehicles || []));
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
+      setError(error.message);
+      setLoading(false);
+    }
+  };
 
   const handleEditClick = (vehicle) => {
     setSelectedVehicle(vehicle);
@@ -124,6 +133,25 @@ const VehicleListings = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  if (status === "loading") {
+    return (
+      <div className="container mx-auto p-4 flex justify-center items-center h-64">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p className="font-bold">Authentication Required</p>
+          <p>You need to log in to view your vehicle listings</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto p-4 flex justify-center items-center h-64">
@@ -147,7 +175,7 @@ const VehicleListings = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-center items-center mb-7 cursor-pointer">
         <div className="shadow-md w-fit border border-black rounded-lg p-6 mb-8">
-          <h1 className="text-2xl font-bold text-black">Vehicle Listings</h1>
+          <h1 className="text-2xl font-bold text-black">My Vehicle Listings</h1>
           <p className="text-gray-500 mt-1">
             Total Active Listings: {vehicles.filter((v) => getVehicleStatus(v) === "Active").length}
           </p>
@@ -231,11 +259,10 @@ const VehicleListings = () => {
                     <span>Feature</span>
                   </button>
                   
-                  {/* Replace the old Delete button with the new DeleteButton component */}
                   <DeleteButton 
-                  onDelete={handleDeleteVehicle} 
-                  itemId={vehicle._id} 
-                />
+                    onDelete={handleDeleteVehicle} 
+                    itemId={vehicle._id} 
+                  />
                 </div>
               </div>
             </div>
