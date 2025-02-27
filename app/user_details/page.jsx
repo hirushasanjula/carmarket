@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PencilIcon, TrashIcon, StarIcon, EyeIcon, BookmarkIcon } from "lucide-react";
+import { PencilIcon, StarIcon, EyeIcon, BookmarkIcon, TrashIcon } from "lucide-react";
 import EditVehicleModal from "@/components/Edit Box";
+import DeleteButton from "@/components/DeleteButton"; // Import the new component
 
 const VehicleListings = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -66,10 +67,6 @@ const VehicleListings = () => {
   };
 
   const handleDeleteVehicle = async (vehicleId) => {
-    if (!confirm("Are you sure you want to delete this vehicle listing?")) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
         method: 'DELETE',
@@ -83,7 +80,7 @@ const VehicleListings = () => {
       setVehicles((prevVehicles) => prevVehicles.filter((v) => v._id !== vehicleId));
     } catch (error) {
       console.error("Error deleting vehicle:", error);
-      alert("Failed to delete vehicle. Please try again.");
+      throw error; // Propagate error to the DeleteButton component
     }
   };
 
@@ -233,13 +230,12 @@ const VehicleListings = () => {
                     <StarIcon className="w-4 h-4 mr-1" />
                     <span>Feature</span>
                   </button>
-                  <button 
-                    onClick={() => handleDeleteVehicle(vehicle._id)}
-                    className="inline-flex items-center text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    <TrashIcon className="w-4 h-4 mr-1" />
-                    <span>Delete</span>
-                  </button>
+                  
+                  {/* Replace the old Delete button with the new DeleteButton component */}
+                  <DeleteButton 
+                  onDelete={handleDeleteVehicle} 
+                  itemId={vehicle._id} 
+                />
                 </div>
               </div>
             </div>
