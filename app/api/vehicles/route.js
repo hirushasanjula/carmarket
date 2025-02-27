@@ -169,3 +169,57 @@ export async function POST(request) {
     }
   }
 }
+
+export async function GET(request) {
+  let connection;
+  try {
+    // Check URL parameters
+    const url = new URL(request.url);
+    const userOnly = url.searchParams.get("userOnly") === "true";
+    
+    // Get the authenticated user
+    const session = await auth();
+    
+    // Connect to the database
+    connection = await connectToDatabase();
+    
+    let query = {};
+    
+    // If userOnly is true, only show the current user's vehicles
+    if (userOnly && session?.user?.email) {
+      // First find the user by email
+      const User = require("@/models/user");
+      const user = await User.findOne({ email: session.user.email });
+      
+      if (user) {
+        query.user = user._id;
+      } else {
+        // If no user found, return empty array
+        return NextResponse.json([], { status: 200 });
+      }
+    }
+    
+    // Find vehicles with the query
+    const vehicles = await Vehicle.find(query)
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .populate("user", "name email") // Populate user details if needed
+      .exec();
+    
+    return NextResponse.json(vehicles, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching vehicles:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch vehicles", details: error.message },
+      { status: 500 }
+    );
+  } finally {
+    // Close database connection
+    if (connection && typeof connection.close === 'function') {
+      try {
+        await connection.close();
+      } catch (closeError) {
+        console.error("Error closing database connection:", closeError);
+      }
+    }
+  }
+}
