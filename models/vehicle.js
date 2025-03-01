@@ -14,7 +14,7 @@ const VehicleSchema = new Schema({
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number] }, // [longitude, latitude]
     },
-    mobile: { type: Number, required: true },
+    
     description: { type: String },
     images: [{ type: String }],
     createdAt: { type: Date, default: Date.now }
