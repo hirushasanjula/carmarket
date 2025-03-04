@@ -34,7 +34,7 @@ const VehicleListings = () => {
       }
       
       const data = await response.json();
-      console.log("Fetched vehicles:", data);
+      console.log("Fetched vehicles for user:", JSON.stringify(data, null, 2));
       setVehicles(Array.isArray(data) ? data : (data.vehicles || []));
       setLoading(false);
     } catch (error) {
@@ -115,8 +115,8 @@ const VehicleListings = () => {
         return "bg-green-100 text-green-800";
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
-      case "Sold":
-        return "bg-gray-100 text-gray-800";
+      case "Rejected":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-blue-100 text-blue-800";
     }
@@ -201,8 +201,8 @@ const VehicleListings = () => {
                     e.target.onerror = null;
                   }}
                 />
-                <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(getVehicleStatus(vehicle))}`}>
-                  {getVehicleStatus(vehicle)}
+                <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(vehicle.status)}`}>
+                  {vehicle.status}
                 </span>
                 <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                   {vehicle.vehicle_condition || "Unknown"}

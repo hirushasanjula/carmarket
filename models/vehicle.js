@@ -17,6 +17,7 @@ const VehicleSchema = new Schema({
     
     description: { type: String },
     images: [{ type: String }],
+    status: { type: String, enum: ["Pending", "Active", "Rejected"], default: "Pending" },
     createdAt: { type: Date, default: Date.now }
   }, { timestamps: true });
 

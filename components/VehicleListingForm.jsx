@@ -171,7 +171,7 @@ export default function VehicleListingForm() {
       setImagePreviewUrls([]);
       
       // Show success message
-      alert('Vehicle listing created successfully!');
+      alert('Vehicle listing created successfully! It is pending admin approval.');
       
     } catch (err) {
       console.error('Form submission error:', err);

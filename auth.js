@@ -24,7 +24,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (user && await bcrypt.compare(credentials.password, user.password)) {
             // Return user data for session if credentials match
-            return user;
+            return {
+              id: user._id.toString(),
+              email: user.email,
+              name: user.name,
+              role: user.role, // Include role
+            };
           }
 
           // Return null if user doesn't exist or credentials don't match
@@ -37,6 +42,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    // Customize JWT token to include role
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.role = user.role; // Add role to token
+      }
+      return token;
+    },
+    // Customize session to include role from token
+    async session({ session, token }) {
+      session.user.id = token.id;
+      session.user.email = token.email;
+      session.user.name = token.name;
+      session.user.role = token.role; // Add role to session
+      return session;
+    },
+  },
   pages: {
     signIn: "/sign-in", // Custom sign-in page path
   },

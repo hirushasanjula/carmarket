@@ -157,47 +157,32 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   let connection;
   try {
-    const { id } = params;
-    
-    // Get the authenticated user
+    const id = params.id; // Consistent with PATCH
     const session = await auth();
-    
+
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "You must be logged in to delete a listing" },
         { status: 401 }
       );
     }
-    
-    // Connect to the database
+
     connection = await connectToDatabase();
-    
-    // Find the vehicle to delete
     const vehicle = await Vehicle.findById(id);
-    
+
     if (!vehicle) {
-      return NextResponse.json(
-        { error: "Vehicle not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Vehicle not found" }, { status: 404 });
     }
-    
-    // Verify the user is the owner of this vehicle
+
     const user = await User.findOne({ email: session.user.email });
-    
-    if (!user || vehicle.user.toString() !== user._id.toString()) {
+    if (!user || (vehicle.user.toString() !== user._id.toString() && user.role !== "admin")) {
       return NextResponse.json(
         { error: "You don't have permission to delete this vehicle" },
         { status: 403 }
       );
     }
-    
-    // Delete the vehicle
+
     await Vehicle.findByIdAndDelete(id);
-    
-    // Optional: Delete associated images from Cloudinary
-    // This would require implementing a function to delete images from Cloudinary
-    
     return NextResponse.json(
       { success: true, message: "Vehicle deleted successfully" },
       { status: 200 }
@@ -209,12 +194,66 @@ export async function DELETE(request, { params }) {
       { status: 500 }
     );
   } finally {
-    if (connection && typeof connection.close === 'function') {
-      try {
-        await connection.close();
-      } catch (closeError) {
-        console.error("Error closing database connection:", closeError);
-      }
+    if (connection && typeof connection.close === "function") {
+      await connection.close();
     }
   }
 }
+
+
+export async function PATCH(request, { params }) {
+  let connection;
+  try {
+    const id = params.id;
+    console.log("Vehicle ID from params:", id);
+
+    const session = await auth();
+    console.log("Session:", JSON.stringify(session, null, 2));
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: "You must be logged in to perform this action" },
+        { status: 401 }
+      );
+    }
+
+    connection = await connectToDatabase();
+    const user = await User.findOne({ email: session.user.email });
+    console.log("User:", user ? JSON.stringify(user, null, 2) : "Not found");
+
+    if (!user || user.role !== "admin") {
+      return NextResponse.json(
+        { error: "You don't have permission to perform this action" },
+        { status: 403 }
+      );
+    }
+
+    const vehicle = await Vehicle.findById(id);
+    if (!vehicle) {
+      return NextResponse.json({ error: "Vehicle not found" }, { status: 404 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    console.log("Request body:", JSON.stringify(body, null, 2));
+    vehicle.status = body.status || "Active";
+    await vehicle.save();
+    console.log("Updated vehicle:", JSON.stringify(vehicle, null, 2));
+
+    return NextResponse.json(
+      { success: true, message: `Vehicle listing set to ${vehicle.status}`, vehicle },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error updating vehicle status:", error);
+    return NextResponse.json(
+      { error: "Failed to update vehicle status", details: error.message },
+      { status: 500 }
+    );
+  } finally {
+    if (connection && typeof connection.close === "function") {
+      await connection.close();
+    }
+  }
+}
+
+// Ensure DELETE handler uses the same params syntax
