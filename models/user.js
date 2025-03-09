@@ -5,6 +5,8 @@ const UserSchema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ["user", "admin"], default: "user" },
+  viewedVehicles: [{ type: Schema.Types.ObjectId, ref: "Vehicle" }],
+  likedVehicles: [{ type: Schema.Types.ObjectId, ref: "Vehicle" }],
   createdAt: { type: Date, default: Date.now }
 });
 

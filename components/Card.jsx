@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, ArrowRight, Phone } from 'lucide-react';
+import { Car, Truck, Compass, Calendar, Fuel, Gauge, ArrowRight, Heart } from 'lucide-react';
 import Link from 'next/link';
-import { CiBookmark } from "react-icons/ci";
+import { motion } from 'framer-motion';
 
 const VehicleSelectionBar = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -11,7 +11,14 @@ const VehicleSelectionBar = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('car');
-  const vehicleCategories = ['car', 'van', 'jeep/suv', 'double-cab'];
+  const [isHovering, setIsHovering] = useState(null);
+
+  const vehicleCategories = [
+    { id: 'car', name: 'Cars', icon: <Car size={16} /> },
+    { id: 'van', name: 'Vans', icon: <Truck size={16} /> },
+    { id: 'jeep/suv', name: 'SUVs', icon: <Compass size={16} /> },
+    { id: 'double-cab', name: 'Double Cabs', icon: <Truck size={16} /> }
+  ];
 
   useEffect(() => {
     fetchVehicles();
@@ -43,7 +50,11 @@ const VehicleSelectionBar = () => {
     }
   };
 
-  const handleBookmark = async (vehicleId) => {
+  const handleBookmark = async (vehicleId, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     try {
       const isSaved = savedVehicles.includes(vehicleId);
       const method = isSaved ? 'DELETE' : 'POST';
@@ -71,111 +82,164 @@ const VehicleSelectionBar = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="w-full max-w-md mx-auto mb-8">
-        <div className="relative bg-gray-200 rounded-full h-10 flex items-center px-2 shadow-sm">
-          <div className="flex justify-between w-full">
+    <div className="container mx-auto px-4 py-8 bg-gradient-to-b from-gray-50 to-white">
+      {/* Category Selection - Smaller Version */}
+      <div className="w-full max-w-xl mx-auto mb-8">
+        <h1 className="text-2xl font-bold text-center mb-4 text-gray-800">Find Your Perfect Ride</h1>
+        <div className="bg-white rounded-xl shadow-md p-1.5">
+          <div className="grid grid-cols-4 gap-1">
             {vehicleCategories.map((category) => (
-              <div key={category} className="relative flex-1 text-center">
-                {selectedCategory === category && (
-                  <div className="absolute -top-1 -bottom-1 -left-2 -right-2 bg-white rounded-full shadow-md z-0"></div>
-                )}
-                <button
-                  onClick={() => setSelectedCategory(category)}
-                  className={`relative z-10 w-full text-xs font-semibold transition-colors duration-200 py-2 ${
-                    selectedCategory === category ? 'text-black' : 'text-gray-500 hover:text-black'
-                  }`}
-                >
-                  {category === 'jeep/suv' ? 'Jeep/SUV' : 
-                   category === 'double-cab' ? 'Double Cab' : 
-                   category.charAt(0).toUpperCase() + category.slice(1)}
-                </button>
-              </div>
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`flex items-center justify-center p-2 rounded-lg transition-all duration-200 ${
+                  selectedCategory === category.id 
+                    ? 'bg-blue-600 text-white shadow-sm' 
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <div className="mr-1.5">{category.icon}</div>
+                <span className="text-xs font-medium">{category.name}</span>
+              </button>
             ))}
           </div>
         </div>
       </div>
 
+      {/* Vehicle Listings - Smaller Cards */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">Loading vehicles...</div>
+        <div className="flex justify-center items-center h-48">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+            <div className="flex-1 space-y-3 py-1">
+              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-200 rounded"></div>
+                <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : error ? (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-auto max-w-lg">
-          <p className="font-bold">Error loading vehicles</p>
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mx-auto max-w-lg">
+          <p className="font-bold">Unable to load vehicles</p>
           <p>{error}</p>
         </div>
       ) : filteredVehicles.length === 0 ? (
-        <div className="text-center p-8 bg-white rounded-lg shadow mx-auto max-w-lg">
-          <p className="text-xl text-gray-600">No {selectedCategory} listings found</p>
-          <p className="mt-2 text-gray-500">Try selecting a different category or check back later.</p>
+        <div className="text-center p-8 bg-white rounded-xl shadow-md mx-auto max-w-md">
+          <div className="text-gray-400 mb-3">
+            <Truck size={36} className="mx-auto" />
+          </div>
+          <p className="text-lg font-semibold text-gray-800">No {selectedCategory} listings available</p>
+          <p className="mt-2 text-sm text-gray-500">Try selecting a different category or check back later.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredVehicles.map((vehicle) => (
-            <div key={vehicle._id} className="w-full max-w-xs mx-auto bg-white rounded-2xl shadow-md overflow-hidden transition-all hover:shadow-lg relative">
-              {isNewListing(vehicle.createdAt) && (
-                <div className="absolute top-0 left-0 z-10">
-                  <div className="bg-green-500 rounded-br-full px-3 py-1">
-                    <span className="text-xs text-white font-light">New</span>
-                  </div>
-                </div>
-              )}
-              <div className="h-40 flex items-center justify-center bg-gray-50">
-                <img 
-                  src={getMainImage(vehicle)} 
-                  alt={vehicle.model} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => { e.target.src = "/api/placeholder/400/300"; }}
-                />
-              </div>
-              <div className="p-4 space-y-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-neutral-800">{vehicle.year} {vehicle.model}</h2>
-                  <div className="flex items-center space-x-2 text-xs text-gray-600">
-                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                      {vehicle.vehicle_condition === 'brand-new' ? 'Brand New' : 
-                       vehicle.vehicle_condition === 'unregister' ? 'Unregistered' : 'Used'}
+            <Link 
+              key={vehicle._id}
+              href={`/vehicle-detail/${vehicle._id}`}
+              className="block"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg relative h-full"
+                onMouseEnter={() => setIsHovering(vehicle._id)}
+                onMouseLeave={() => setIsHovering(null)}
+              >
+                {/* New listing badge */}
+                {isNewListing(vehicle.createdAt) && (
+                  <div className="absolute top-1 left-2 z-10">
+                    <span className="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                      New
                     </span>
-                    {vehicle.user && (
-                      <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
-                        Seller: {vehicle.user.name}
-                      </span>
-                    )}
                   </div>
+                )}
+                
+                {/* Save button */}
+                <button 
+                  onClick={(e) => handleBookmark(vehicle._id, e)}
+                  className="absolute top-1 right-2 z-10 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-all hover:bg-white"
+                >
+                  <Heart 
+                    size={16} 
+                    className={`${savedVehicles.includes(vehicle._id) ? 'fill-red-500 text-red-500' : 'text-gray-500'}`}
+                  />
+                </button>
+                
+                {/* Image section */}
+                <div className="h-40 overflow-hidden">
+                  <img 
+                    src={getMainImage(vehicle)} 
+                    alt={vehicle.model}
+                    className={`w-full  object-scale-down transition-transform duration-300 ease-in-out ${isHovering === vehicle._id ? 'scale-110' : 'scale-100'}`}
+                    onError={(e) => { e.target.src = "/api/placeholder/400/300"; }}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <Users size={16} />
-                      <span>{vehicle.vehicle_type.charAt(0).toUpperCase() + vehicle.vehicle_type.slice(1)}</span>
+                
+                {/* Content section */}
+                <div className="p-3">
+                  {/* Vehicle title & condition */}
+                  <div className="mb-2">
+                    <h2 className="text-base font-bold text-gray-800 leading-tight">{vehicle.year} {vehicle.model}</h2>
+                    <div className="mt-1 flex items-center">
+                      <span className={`inline-block px-1.5 py-0.5 rounded-md text-xs font-medium ${
+                        vehicle.vehicle_condition === 'brand-new' ? 'bg-green-100 text-green-800' : 
+                        vehicle.vehicle_condition === 'unregister' ? 'bg-yellow-100 text-yellow-800' : 
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {vehicle.vehicle_condition === 'brand-new' ? 'Brand New' : 
+                         vehicle.vehicle_condition === 'unregister' ? 'Unregistered' : 'Used'}
+                      </span>
                     </div>
-                    <div className="flex items-center space-x-1">
+                  </div>
+                  
+                  {/* Specs */}
+                  <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3">
+                    <div className="flex items-center text-xs text-gray-600">
+                      <Calendar size={12} className="mr-1 text-blue-500" />
+                      <span>{vehicle.year}</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-600">
+                      <Gauge size={12} className="mr-1 text-blue-500" />
+                      <span>{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-600">
+                      <Fuel size={12} className="mr-1 text-blue-500" />
+                      <span>{vehicle.fuelType || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h8m-8 5h8m-8 5h8" />
+                      </svg>
                       <span>{vehicle.transmission || 'N/A'}</span>
                     </div>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>{vehicle.fuelType || 'N/A'}</span>
-                    <span>{vehicle.mileage ? `${vehicle.mileage} km` : 'N/A'}</span>
+                  
+                  {/* Price & seller */}
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <span className="text-xs text-gray-500">Price</span>
+                      <div className="text-lg font-bold text-blue-600">${formatPrice(vehicle.price)}</div>
+                    </div>
+                    {vehicle.user && (
+                      <div className="text-right">
+                        <span className="text-xs text-gray-500 block">by</span>
+                        <div className="text-xs font-medium">{vehicle.user.name}</div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Action button */}
+                  <div className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg py-1.5 font-medium text-xs transition-all hover:shadow-sm hover:from-blue-700 hover:to-blue-800">
+                    <span>View Details</span>
+                    <ArrowRight size={12} className="ml-1.5" />
                   </div>
                 </div>
-                <hr className="border-gray-200" />
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Price</span>
-                  <span className="text-base font-semibold text-gray-900">${formatPrice(vehicle.price)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <Link href={`/vehicle-detail/${vehicle._id}`} className="w-full flex items-center justify-center bg-blue-600 text-white rounded-lg py-2 space-x-2 hover:bg-blue-700 transition-colors">
-                    <span>View Now</span>
-                    <ArrowRight size={20} />
-                  </Link>
-                  <button 
-                    onClick={() => handleBookmark(vehicle._id)}
-                    className={`p-2 ${savedVehicles.includes(vehicle._id) ? 'text-blue-600' : 'text-gray-600'} hover:text-blue-700`}
-                  >
-                    <CiBookmark size={20} />
-                  </button>
-                </div>
-              </div>
-            </div>
+              </motion.div>
+            </Link>
           ))}
         </div>
       )}
