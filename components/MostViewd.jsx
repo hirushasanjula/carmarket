@@ -120,7 +120,7 @@ const MostViewedVehicles = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {vehicles.map((vehicle) => (
-            <Link key={vehicle._id} href={`/vehicles/${vehicle._id}`} className="block">
+            <Link key={vehicle._id} href={`/vehicle-detail/${vehicle._id}`} className="block">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
