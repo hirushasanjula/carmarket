@@ -34,6 +34,14 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
+
+    // Track unique viewers
+    //vehicle.views = (vehicle.views || 0) + 1;
+
+    if (!vehicle.viewers.includes(User._id)) {
+         vehicle.viewers.push(User._id);
+         vehicle.views = (vehicle.views || 0) + 1; // Optional: track total too
+       }
     
     // Remove the owner check to allow all authenticated users to view the vehicle
     

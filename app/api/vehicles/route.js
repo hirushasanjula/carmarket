@@ -169,17 +169,16 @@ export async function GET(request) {
   try {
     // Get the authenticated user
     const session = await auth();
-    
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be logged in to view listings" }, 
+        { error: "You must be logged in to view listings" },
         { status: 401 }
       );
     }
-    
+
     // Connect to the database
     connection = await connectToDatabase();
-    
+
     // Get the user to filter by their ID
     const userEmail = session.user.email;
     if (!userEmail) {
@@ -188,37 +187,38 @@ export async function GET(request) {
         { status: 400 }
       );
     }
-    
-    // Find the user by email to get their MongoDB ID
+
     const user = await User.findOne({ email: userEmail });
-    
     if (!user) {
       return NextResponse.json(
         { error: "User not found in database" },
         { status: 404 }
       );
     }
-    
-    // Check if we need to filter by user (for user's own listings)
-    // Add a query parameter check to determine if we want all vehicles or just the user's
+
+    // Check if we need to filter by user
     const url = new URL(request.url);
-    const showAll = url.searchParams.get('showAll') === 'true';
-    
+    const showAll = url.searchParams.get("showAll") === "true";
+
     let query = {};
     if (!showAll) {
-      // Only show the user's own vehicles if not explicitly showing all
       query = { user: user._id, status: { $in: ["Pending", "Active"] } };
     } else {
       query = { status: "Active" };
     }
-    
-    // Sort by newest first
+
+    // Fetch vehicles with views/viewers
     const vehicles = await Vehicle.find(query)
       .sort({ createdAt: -1 })
       .populate("user", "name email")
       .exec();
-    
-    return NextResponse.json(vehicles, { status: 200 });
+
+    console.log("Vehicles fetched:", vehicles.length); // Debug log
+
+    // Optional: Convert to plain objects if needed (not usually necessary with .exec())
+    const vehicleData = vehicles.map(v => v.toObject());
+
+    return NextResponse.json(vehicleData, { status: 200 });
   } catch (error) {
     console.error("Error fetching vehicles:", error);
     return NextResponse.json(
@@ -226,8 +226,7 @@ export async function GET(request) {
       { status: 500 }
     );
   } finally {
-    // Close database connection
-    if (connection && typeof connection.close === 'function') {
+    if (connection && typeof connection.close === "function") {
       try {
         await connection.close();
       } catch (closeError) {

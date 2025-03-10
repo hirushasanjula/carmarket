@@ -235,10 +235,10 @@ const VehicleListings = () => {
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                   <span>Posted {formatDate(vehicle.createdAt)}</span>
                   <div className="flex items-center space-x-4">
-                    <span className="flex items-center">
-                      <EyeIcon className="w-4 h-4 mr-1" />
-                      {vehicle.views || 0}
-                    </span>
+                  <span className="flex items-center">
+                    <EyeIcon className="w-4 h-4 mr-1" />
+                    {vehicle.viewers ? vehicle.viewers.length : 0}
+                  </span>
                     <span className="flex items-center">
                       <BookmarkIcon className="w-4 h-4 mr-1" />
                       {vehicle.saves || 0}

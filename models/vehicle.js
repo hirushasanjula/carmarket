@@ -18,7 +18,9 @@ const VehicleSchema = new Schema({
     description: { type: String },
     images: [{ type: String }],
     status: { type: String, enum: ["Pending", "Active", "Rejected"], default: "Pending" },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    views: { type: Number, default: 0 }, // Optional: keep for total views
+    viewers: [{ type: Schema.Types.ObjectId, ref: "User" }],
   }, { timestamps: true });
 
   VehicleSchema.index({ location: "2dsphere" });
