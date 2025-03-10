@@ -50,22 +50,22 @@ export default function RecommendedVehicles({ currentVehicleId }) {
         <p className="text-gray-600">No recommendations available yet. Keep exploring!</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recommendedVehicles.map((recVehicle) => (
+          {recommendedVehicles.map((vehicle) => (
             <Link
-              key={recVehicle._id}
-              href={`/vehicles/${recVehicle._id}`}
+              key={vehicle._id}
+              href={`/vehicle-detail/${vehicle._id}`}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               <img
-                src={recVehicle.images && recVehicle.images.length > 0 ? recVehicle.images[0] : "/api/placeholder/400/300"}
-                alt={recVehicle.model}
+                src={vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : "/api/placeholder/400/300"}
+                alt={vehicle.model}
                 className="w-full h-48 object-cover"
                 onError={(e) => { e.target.src = "/api/placeholder/400/300"; e.target.onerror = null; }}
               />
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900">{recVehicle.year} {recVehicle.model}</h3>
-                <p className="text-xl font-bold text-blue-600">Rs. {formatPrice(recVehicle.price)}</p>
-                <p className="text-sm text-gray-600">Type: {recVehicle.vehicle_type}</p>
+                <h3 className="text-lg font-semibold text-gray-900">{vehicle.year} {vehicle.model}</h3>
+                <p className="text-xl font-bold text-blue-600">Rs. {formatPrice(vehicle.price)}</p>
+                <p className="text-sm text-gray-600">Type: {vehicle.vehicle_type}</p>
               </div>
             </Link>
           ))}

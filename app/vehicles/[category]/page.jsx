@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Calendar, Fuel, Gauge, ArrowRight, Heart } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Calendar, Fuel, Gauge, ArrowRight, Heart } from "lucide-react";
 
-const MostViewedVehicles = () => {
+const CategoryPage = ({ params: paramsPromise }) => {
+  const params = React.use(paramsPromise); // Unwrap the params Promise
   const [vehicles, setVehicles] = useState([]);
   const [savedVehicles, setSavedVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,29 +14,21 @@ const MostViewedVehicles = () => {
   const [isHovering, setIsHovering] = useState(null);
 
   useEffect(() => {
-    fetchMostViewedVehicles();
+    fetchVehicles();
     fetchSavedVehicles();
-  }, []);
+  }, [params.category]);
 
-  const fetchMostViewedVehicles = async () => {
+  const fetchVehicles = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/vehicles?showAll=true");
-      if (!response.ok) throw new Error(`Failed to fetch vehicles: ${response.status}`);
+      const response = await fetch(`/api/vehicles?showAll=true`);
+      if (!response.ok) throw new Error("Failed to fetch vehicles");
       const data = await response.json();
-
-      // Sort by views and take top 4
-      const topViewedVehicles = Array.isArray(data)
-        ? data
-            .sort((a, b) => (b.views || 0) - (a.views || 0))
-            .slice(0, 4) // Limit to top 4 most viewed
-        : [];
-
-      setVehicles(topViewedVehicles);
+      const filtered = data.filter((v) => v.vehicle_type === params.category);
+      setVehicles(filtered);
       setLoading(false);
-    } catch (error) {
-      console.error("Error fetching most viewed vehicles:", error);
-      setError(error.message);
+    } catch (err) {
+      setError(err.message);
       setLoading(false);
     }
   };
@@ -82,45 +75,25 @@ const MostViewedVehicles = () => {
     return differenceInDays < 7;
   };
 
+  if (loading) return <div className="text-center py-8">Loading...</div>;
+  if (error) return <div className="text-center py-8 text-red-600">Error: {error}</div>;
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gradient-to-b from-gray-50 to-white">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Most Viewed Vehicles</h1>
-        <p className="text-sm text-gray-500 mt-2">Check out the top trending rides!</p>
-      </div>
-
-      {/* Vehicle Listings */}
-      {loading ? (
-        <div className="flex justify-center items-center h-48">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-            <div className="flex-1 space-y-3 py-1">
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mx-auto max-w-lg">
-          <p className="font-bold">Unable to load vehicles</p>
-          <p>{error}</p>
-        </div>
-      ) : vehicles.length === 0 ? (
+      <h1 className="text-3xl font-bold mb-6 capitalize text-center text-gray-800">
+        All {params.category.replace("-", " ")} Listings
+      </h1>
+      {vehicles.length === 0 ? (
         <div className="text-center p-8 bg-white rounded-xl shadow-md mx-auto max-w-md">
-          <div className="text-gray-400 mb-3">
-            <Car size={36} className="mx-auto" />
-          </div>
-          <p className="text-lg font-semibold text-gray-800">No vehicles available</p>
-          <p className="mt-2 text-sm text-gray-500">Check back later for trending vehicles.</p>
+          <p className="text-lg font-semibold text-gray-800">
+            No {params.category.replace("-", " ")} listings available
+          </p>
+          <p className="mt-2 text-sm text-gray-500">Check back later for more options.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {vehicles.map((vehicle) => (
-            <Link key={vehicle._id} href={`/vehicles/${vehicle._id}`} className="block">
+            <Link key={vehicle._id} href={`/vehicle-detail/${vehicle._id}`} className="block">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -251,4 +224,4 @@ const MostViewedVehicles = () => {
   );
 };
 
-export default MostViewedVehicles;
+export default CategoryPage;
