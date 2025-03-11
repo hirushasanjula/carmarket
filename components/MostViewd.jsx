@@ -4,6 +4,9 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Fuel, Gauge, ArrowRight, Heart, Car } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
 
 const MostViewedVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -11,16 +14,22 @@ const MostViewedVehicles = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isHovering, setIsHovering] = useState(null);
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
-    fetchMostViewedVehicles();
-    fetchSavedVehicles();
-  }, []);
+    fetchMostViewedVehicles(); // Fetch public vehicles always
+    if (status === "authenticated") {
+      fetchSavedVehicles(); // Fetch saved vehicles only if logged in
+    }
+  }, [status]);
 
   const fetchMostViewedVehicles = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/vehicles?showAll=true");
+      const response = await fetch("/api/vehicles?showAll=true", {
+        credentials: "include", // Optional, but safe to include
+      });
       if (!response.ok) throw new Error(`Failed to fetch vehicles: ${response.status}`);
       const data = await response.json();
 
@@ -28,7 +37,7 @@ const MostViewedVehicles = () => {
       const topViewedVehicles = Array.isArray(data)
         ? data
             .sort((a, b) => (b.views || 0) - (a.views || 0))
-            .slice(0, 4) // Limit to top 4 most viewed
+            .slice(0, 4)
         : [];
 
       setVehicles(topViewedVehicles);
@@ -42,8 +51,13 @@ const MostViewedVehicles = () => {
 
   const fetchSavedVehicles = async () => {
     try {
-      const response = await fetch("/api/saved-vehicles");
-      if (!response.ok) return; // Skip if not logged in
+      const response = await fetch("/api/saved-vehicles", {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        console.log("Saved vehicles fetch failed (likely not logged in):", response.status);
+        return;
+      }
       const data = await response.json();
       setSavedVehicles(data.map((sv) => sv.vehicle._id));
     } catch (error) {
@@ -56,6 +70,10 @@ const MostViewedVehicles = () => {
       e.preventDefault();
       e.stopPropagation();
     }
+    if (status !== "authenticated") {
+      router.push("/api/auth/signin"); // Redirect to login page
+      return;
+    }
     try {
       const isSaved = savedVehicles.includes(vehicleId);
       const method = isSaved ? "DELETE" : "POST";
@@ -63,6 +81,7 @@ const MostViewedVehicles = () => {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vehicleId }),
+        credentials: "include",
       });
       if (!response.ok) throw new Error(`Failed to ${isSaved ? "remove" : "save"} vehicle`);
       setSavedVehicles((prev) =>
@@ -82,7 +101,6 @@ const MostViewedVehicles = () => {
     return differenceInDays < 7;
   };
 
-  // Vehicle Card Skeleton component
   const VehicleCardSkeleton = () => (
     <div className="bg-white rounded-xl shadow-md overflow-hidden h-full animate-pulse">
       <div className="h-40 bg-gray-100"></div>
@@ -112,7 +130,6 @@ const MostViewedVehicles = () => {
     </div>
   );
 
-  // Header Skeleton component
   const HeaderSkeleton = () => (
     <div className="text-center mb-8 animate-pulse">
       <div className="h-7 bg-gray-100 rounded w-56 mx-auto mb-2"></div>
@@ -122,7 +139,6 @@ const MostViewedVehicles = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gradient-to-b from-gray-50 to-white">
-      {/* Header */}
       {loading ? (
         <HeaderSkeleton />
       ) : (
@@ -132,7 +148,6 @@ const MostViewedVehicles = () => {
         </div>
       )}
 
-      {/* Vehicle Listings */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, index) => (
@@ -164,7 +179,6 @@ const MostViewedVehicles = () => {
                 onMouseEnter={() => setIsHovering(vehicle._id)}
                 onMouseLeave={() => setIsHovering(null)}
               >
-                {/* New Listing Badge */}
                 {isNewListing(vehicle.createdAt) && (
                   <div className="absolute top-1 left-2 z-10">
                     <span className="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
@@ -172,8 +186,6 @@ const MostViewedVehicles = () => {
                     </span>
                   </div>
                 )}
-
-                {/* Save Button */}
                 <button
                   onClick={(e) => handleBookmark(vehicle._id, e)}
                   className="absolute top-1 right-2 z-10 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-all hover:bg-white"
@@ -183,8 +195,6 @@ const MostViewedVehicles = () => {
                     className={`${savedVehicles.includes(vehicle._id) ? "fill-red-500 text-red-500" : "text-gray-500"}`}
                   />
                 </button>
-
-                {/* Image Section */}
                 <div className="h-40 overflow-hidden">
                   <img
                     src={getMainImage(vehicle)}
@@ -197,10 +207,7 @@ const MostViewedVehicles = () => {
                     }}
                   />
                 </div>
-
-                {/* Content Section */}
                 <div className="p-3">
-                  {/* Vehicle Title & Condition */}
                   <div className="mb-2">
                     <h2 className="text-base font-bold text-gray-800 leading-tight">
                       {vehicle.year} {vehicle.model}
@@ -223,8 +230,6 @@ const MostViewedVehicles = () => {
                       </span>
                     </div>
                   </div>
-
-                  {/* Specs */}
                   <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3">
                     <div className="flex items-center text-xs text-gray-600">
                       <Calendar size={12} className="mr-1 text-blue-500" />
@@ -256,8 +261,6 @@ const MostViewedVehicles = () => {
                       <span>{vehicle.transmission || "N/A"}</span>
                     </div>
                   </div>
-
-                  {/* Price & Seller */}
                   <div className="flex justify-between items-center mb-3">
                     <div>
                       <span className="text-xs text-gray-500">Price</span>
@@ -270,8 +273,6 @@ const MostViewedVehicles = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* Action Button */}
                   <div className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg py-1.5 font-medium text-xs transition-all hover:shadow-sm hover:from-blue-700 hover:to-blue-800">
                     <span>View Details</span>
                     <ArrowRight size={12} className="ml-1.5" />

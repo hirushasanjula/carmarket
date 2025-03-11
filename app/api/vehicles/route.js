@@ -167,56 +167,41 @@ export async function POST(request) {
 export async function GET(request) {
   let connection;
   try {
-    // Get the authenticated user
     const session = await auth();
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "You must be logged in to view listings" },
-        { status: 401 }
-      );
-    }
+    const url = new URL(request.url);
+    const showAll = url.searchParams.get("showAll") === "true";
 
     // Connect to the database
     connection = await connectToDatabase();
 
-    // Get the user to filter by their ID
-    const userEmail = session.user.email;
-    if (!userEmail) {
-      return NextResponse.json(
-        { error: "User email not found in session" },
-        { status: 400 }
-      );
-    }
+    let query = { status: "Active" }; // Default: public active vehicles
 
-    const user = await User.findOne({ email: userEmail });
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found in database" },
-        { status: 404 }
-      );
-    }
-
-    // Check if we need to filter by user
-    const url = new URL(request.url);
-    const showAll = url.searchParams.get("showAll") === "true";
-
-    let query = {};
-    if (!showAll) {
+    // If authenticated and not showAll, filter by user
+    if (session && session.user && !showAll) {
+      const userEmail = session.user.email;
+      if (!userEmail) {
+        return NextResponse.json(
+          { error: "User email not found in session" },
+          { status: 400 }
+        );
+      }
+      const user = await User.findOne({ email: userEmail });
+      if (!user) {
+        return NextResponse.json(
+          { error: "User not found in database" },
+          { status: 404 }
+        );
+      }
       query = { user: user._id, status: { $in: ["Pending", "Active"] } };
-    } else {
-      query = { status: "Active" };
     }
 
-    // Fetch vehicles with views/viewers
     const vehicles = await Vehicle.find(query)
       .sort({ createdAt: -1 })
       .populate("user", "name email")
       .exec();
 
-    console.log("Vehicles fetched:", vehicles.length); // Debug log
-
-    // Optional: Convert to plain objects if needed (not usually necessary with .exec())
-    const vehicleData = vehicles.map(v => v.toObject());
+    console.log("Vehicles fetched:", vehicles.length);
+    const vehicleData = vehicles.map((v) => v.toObject());
 
     return NextResponse.json(vehicleData, { status: 200 });
   } catch (error) {

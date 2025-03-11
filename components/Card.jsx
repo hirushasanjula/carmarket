@@ -4,6 +4,9 @@ import React, { useState, useEffect } from "react";
 import { Car, Truck, Compass, Calendar, Fuel, Gauge, ArrowRight, Heart } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
 
 const VehicleSelectionBar = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -13,6 +16,8 @@ const VehicleSelectionBar = () => {
   const [selectedCategory, setSelectedCategory] = useState("car");
   const [isHovering, setIsHovering] = useState(null);
   const [isDesktop, setIsDesktop] = useState(false);
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   const vehicleCategories = [
     { id: "car", name: "Cars", icon: <Car size={16} /> },
@@ -30,19 +35,24 @@ const VehicleSelectionBar = () => {
 
   useEffect(() => {
     fetchVehicles();
-    fetchSavedVehicles();
-  }, []);
+    if (status === "authenticated") {
+      fetchSavedVehicles();
+    }
+  }, [status]);
 
   const fetchVehicles = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/vehicles?showAll=true");
+      const response = await fetch("/api/vehicles?showAll=true", {
+        credentials: "include", // Optional now, but safe to include
+      });
       if (!response.ok) throw new Error(`Failed to fetch vehicles: ${response.status}`);
       const data = await response.json();
-      console.log("Fetched vehicles:", data); // Debug: Raw data
+      console.log("Fetched vehicles:", data);
       setVehicles(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (error) {
+      console.error("Error fetching vehicles:", error);
       setError(error.message);
       setLoading(false);
     }
@@ -50,8 +60,13 @@ const VehicleSelectionBar = () => {
 
   const fetchSavedVehicles = async () => {
     try {
-      const response = await fetch("/api/saved-vehicles");
-      if (!response.ok) return;
+      const response = await fetch("/api/saved-vehicles", {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        console.log("Saved vehicles fetch failed (likely not logged in):", response.status);
+        return;
+      }
       const data = await response.json();
       setSavedVehicles(data.map((sv) => sv.vehicle._id));
     } catch (error) {
@@ -64,6 +79,10 @@ const VehicleSelectionBar = () => {
       e.preventDefault();
       e.stopPropagation();
     }
+    if (status !== "authenticated") {
+      router.push("/api/auth/signin"); // Redirect to login page
+      return;
+    }
     try {
       const isSaved = savedVehicles.includes(vehicleId);
       const method = isSaved ? "DELETE" : "POST";
@@ -71,6 +90,7 @@ const VehicleSelectionBar = () => {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vehicleId }),
+        credentials: "include",
       });
       if (!response.ok) throw new Error(`Failed to ${isSaved ? "remove" : "save"} vehicle`);
       setSavedVehicles((prev) =>
@@ -86,7 +106,7 @@ const VehicleSelectionBar = () => {
 
   console.log(
     `Selected Category: ${selectedCategory}, Total Vehicles: ${vehicles.length}, Filtered Vehicles: ${filteredVehicles.length}, Displayed: ${displayedVehicles.length}, Is Desktop: ${isDesktop}`
-  ); // Debug
+  );
 
   const formatPrice = (price) => (price ? price.toLocaleString() : "0");
   const getMainImage = (vehicle) =>
@@ -97,7 +117,6 @@ const VehicleSelectionBar = () => {
     return differenceInDays < 7;
   };
 
-  // Skeleton loader for vehicle cards
   const VehicleCardSkeleton = () => (
     <div className="bg-white rounded-xl shadow-md overflow-hidden h-full animate-pulse">
       <div className="h-40 bg-gray-100"></div>
@@ -127,7 +146,6 @@ const VehicleSelectionBar = () => {
     </div>
   );
 
-  // Category skeleton
   const CategorySkeleton = () => (
     <div className="w-full max-w-xl mx-auto mb-8 animate-pulse">
       <div className="h-7 bg-gray-100 rounded w-56 mx-auto mb-4"></div>
@@ -143,7 +161,6 @@ const VehicleSelectionBar = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gradient-to-b from-gray-50 to-white">
-      {/* Category Selection */}
       {loading ? (
         <CategorySkeleton />
       ) : (
@@ -170,7 +187,6 @@ const VehicleSelectionBar = () => {
         </div>
       )}
 
-      {/* Vehicle Listings */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {[...Array(isDesktop ? 5 : 3)].map((_, index) => (
@@ -309,7 +325,6 @@ const VehicleSelectionBar = () => {
             ))}
           </div>
 
-          {/* View All Button */}
           {filteredVehicles.length > displayedVehicles.length && (
             <div className="mt-6 text-center">
               <Link href={`/vehicles/${selectedCategory}`}>

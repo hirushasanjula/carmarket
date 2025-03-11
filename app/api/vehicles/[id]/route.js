@@ -11,23 +11,13 @@ export async function GET(request, { params }) {
   let connection;
   try {
     const { id } = params;
-    
-    // Get the authenticated user
-    const session = await auth();
-    
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "You must be logged in to view this vehicle" },
-        { status: 401 }
-      );
-    }
-    
+
     // Connect to the database
     connection = await connectToDatabase();
-    
+
     // Find the vehicle
-    const vehicle = await Vehicle.findById(id).populate("user", "name email");
-    
+    const vehicle = await Vehicle.findById(id).populate("user", "name email mobile");
+
     if (!vehicle) {
       return NextResponse.json(
         { error: "Vehicle not found" },
@@ -35,20 +25,21 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Track unique viewers
-    //vehicle.views = (vehicle.views || 0) + 1;
+    // Optional: Track views for authenticated users
+    const session = await auth();
+    if (session && session.user) {
+      const user = await User.findOne({ email: session.user.email });
+      if (user && !vehicle.viewers.includes(user._id)) {
+        vehicle.viewers.push(user._id);
+        vehicle.views = (vehicle.views || 0) + 1;
+        await vehicle.save();
+      } else if (user) {
+        // Increment views even if already viewed (optional behavior)
+        vehicle.views = (vehicle.views || 0) + 1;
+        await vehicle.save();
+      }
+    }
 
-    if (!vehicle.viewers.includes(User._id)) {
-         vehicle.viewers.push(User._id);
-         vehicle.views = (vehicle.views || 0) + 1; // Optional: track total too
-       }
-    
-    // Remove the owner check to allow all authenticated users to view the vehicle
-    
-    // Increment views count (optional)
-    vehicle.views = (vehicle.views || 0) + 1;
-    await vehicle.save();
-    
     return NextResponse.json(vehicle, { status: 200 });
   } catch (error) {
     console.error("Error fetching vehicle:", error);
@@ -57,7 +48,7 @@ export async function GET(request, { params }) {
       { status: 500 }
     );
   } finally {
-    if (connection && typeof connection.close === 'function') {
+    if (connection && typeof connection.close === "function") {
       try {
         await connection.close();
       } catch (closeError) {

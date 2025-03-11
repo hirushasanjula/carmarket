@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Phone, Mail, MapPin, Share2, Flag, ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import RecommendedVehicles from "@/components/RecommendedVehicles"; // Import the new component
+import RecommendedVehicles from "@/components/RecommendedVehicles";
 
 export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState(null);
@@ -14,17 +14,17 @@ export default function VehicleDetailPage() {
   const params = useParams();
   const router = useRouter();
   const vehicleId = params.id;
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     const fetchVehicleDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/vehicles/${vehicleId}`);
+        const response = await fetch(`/api/vehicles/${vehicleId}`, {
+          credentials: "include", // Optional, safe to include
+        });
         if (!response.ok) {
           if (response.status === 404) throw new Error("Vehicle not found");
-          if (response.status === 401) throw new Error("You must be logged in to view this vehicle");
-          if (response.status === 403) throw new Error("You don't have permission to view this vehicle");
           throw new Error(`Failed to fetch vehicle: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
@@ -39,19 +39,20 @@ export default function VehicleDetailPage() {
 
     if (vehicleId) {
       fetchVehicleDetails();
-      if (session?.user) {
-        // Record view
+      // Record view only if authenticated
+      if (status === "authenticated") {
         fetch("/api/interactions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ vehicleId, action: "view" }),
+          credentials: "include",
         }).catch((err) => console.error("Error recording view:", err));
       }
     }
-  }, [vehicleId, session]);
+  }, [vehicleId, status]);
 
   const handleLike = async () => {
-    if (!session?.user) {
+    if (status !== "authenticated") {
       alert("Please log in to like this vehicle");
       return;
     }
@@ -61,6 +62,7 @@ export default function VehicleDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vehicleId, action: "like" }),
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to record like");
       const data = await res.json();
@@ -184,7 +186,7 @@ export default function VehicleDetailPage() {
               )}
               <div className="space-y-3">
                 <button className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                  <Phone size={20} /> <span>{vehicle.mobile || "Contact seller"}</span>
+                  <Phone size={20} /> <span>{vehicle.user?.mobile || "Contact seller"}</span>
                 </button>
                 {vehicle.user && vehicle.user.email && (
                   <button className="w-full flex items-center justify-center gap-2 bg-white text-blue-600 border-2 border-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors">
@@ -210,7 +212,6 @@ export default function VehicleDetailPage() {
           </div>
         </div>
 
-        {/* Add RecommendedVehicles component */}
         <RecommendedVehicles currentVehicleId={vehicleId} />
       </div>
     </div>
