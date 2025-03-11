@@ -97,44 +97,85 @@ const VehicleSelectionBar = () => {
     return differenceInDays < 7;
   };
 
+  // Skeleton loader for vehicle cards
+  const VehicleCardSkeleton = () => (
+    <div className="bg-white rounded-xl shadow-md overflow-hidden h-full animate-pulse">
+      <div className="h-40 bg-gray-100"></div>
+      <div className="p-3">
+        <div className="mb-2">
+          <div className="h-5 bg-gray-100 rounded w-3/4 mb-1"></div>
+          <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+        </div>
+        <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3">
+          <div className="h-3 bg-gray-100 rounded"></div>
+          <div className="h-3 bg-gray-100 rounded"></div>
+          <div className="h-3 bg-gray-100 rounded"></div>
+          <div className="h-3 bg-gray-100 rounded"></div>
+        </div>
+        <div className="flex justify-between items-center mb-3">
+          <div className="w-1/2">
+            <div className="h-3 bg-gray-100 rounded w-1/2 mb-1"></div>
+            <div className="h-5 bg-gray-100 rounded w-3/4"></div>
+          </div>
+          <div className="w-1/3">
+            <div className="h-3 bg-gray-100 rounded w-full mb-1"></div>
+            <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+          </div>
+        </div>
+        <div className="w-full h-8 bg-gray-100 rounded-lg"></div>
+      </div>
+    </div>
+  );
+
+  // Category skeleton
+  const CategorySkeleton = () => (
+    <div className="w-full max-w-xl mx-auto mb-8 animate-pulse">
+      <div className="h-7 bg-gray-100 rounded w-56 mx-auto mb-4"></div>
+      <div className="bg-white rounded-xl shadow-md p-1.5">
+        <div className="grid grid-cols-4 gap-1">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-10 bg-gray-100 rounded-lg"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gradient-to-b from-gray-50 to-white">
       {/* Category Selection */}
-      <div className="w-full max-w-xl mx-auto mb-8">
-        <h1 className="text-2xl font-bold text-center mb-4 text-gray-800">Find Your Perfect Ride</h1>
-        <div className="bg-white rounded-xl shadow-md p-1.5">
-          <div className="grid grid-cols-4 gap-1">
-            {vehicleCategories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`flex items-center justify-center p-2 rounded-lg transition-all duration-200 ${
-                  selectedCategory === category.id
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <div className="mr-1.5">{category.icon}</div>
-                <span className="text-xs font-medium">{category.name}</span>
-              </button>
-            ))}
+      {loading ? (
+        <CategorySkeleton />
+      ) : (
+        <div className="w-full max-w-xl mx-auto mb-8">
+          <h1 className="text-2xl font-bold text-center mb-4 text-gray-800">Find Your Perfect Ride</h1>
+          <div className="bg-white rounded-xl shadow-md p-1.5">
+            <div className="grid grid-cols-4 gap-1">
+              {vehicleCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`flex items-center justify-center p-2 rounded-lg transition-all duration-200 ${
+                    selectedCategory === category.id
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <div className="mr-1.5">{category.icon}</div>
+                  <span className="text-xs font-medium">{category.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Vehicle Listings */}
       {loading ? (
-        <div className="flex justify-center items-center h-48">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-            <div className="flex-1 space-y-3 py-1">
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {[...Array(isDesktop ? 5 : 3)].map((_, index) => (
+            <VehicleCardSkeleton key={index} />
+          ))}
         </div>
       ) : error ? (
         <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mx-auto max-w-lg">

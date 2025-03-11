@@ -4,21 +4,20 @@ import React, { useState, useEffect } from "react";
 import { PencilIcon, StarIcon, EyeIcon, BookmarkIcon, TrashIcon } from "lucide-react";
 import EditVehicleModal from "@/components/Edit Box";
 import DeleteButton from "@/components/DeleteButton";
-import { useSession } from "next-auth/react"; // Import useSession
+import VehicleSkeleton from "@/components/VehicleSkeleton";
+import { useSession } from "next-auth/react";
 
 const VehicleListings = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const { data: session, status } = useSession(); // Get session info
+  const { data: session, status } = useSession();
 
   useEffect(() => {
-    // Only fetch vehicles if user is authenticated
     if (status === "authenticated") {
       fetchVehicles();
     } else if (status === "unauthenticated") {
-      // If user is not authenticated, show error or redirect
       setError("You must be logged in to view your listings");
       setLoading(false);
     }
@@ -26,7 +25,6 @@ const VehicleListings = () => {
 
   const fetchVehicles = async () => {
     try {
-      // Use the default endpoint without showAll=true to only get the user's vehicles
       const response = await fetch('/api/vehicles');
       
       if (!response.ok) {
@@ -50,7 +48,6 @@ const VehicleListings = () => {
 
   const handleSaveEdit = async (updatedVehicle) => {
     try {
-      // Call your API to update the vehicle
       const response = await fetch(`/api/vehicles/${updatedVehicle._id}`, {
         method: 'PUT',
         headers: {
@@ -63,7 +60,6 @@ const VehicleListings = () => {
         throw new Error(`Failed to update vehicle: ${response.status}`);
       }
 
-      // Update the local state with the edited vehicle
       setVehicles((prevVehicles) =>
         prevVehicles.map((v) => (v._id === updatedVehicle._id ? updatedVehicle : v))
       );
@@ -85,30 +81,25 @@ const VehicleListings = () => {
         throw new Error(`Failed to delete vehicle: ${response.status}`);
       }
 
-      // Remove the deleted vehicle from the state
       setVehicles((prevVehicles) => prevVehicles.filter((v) => v._id !== vehicleId));
     } catch (error) {
       console.error("Error deleting vehicle:", error);
-      throw error; // Propagate error to the DeleteButton component
+      throw error;
     }
   };
 
-  // Format the vehicle title based on year and model
   const getVehicleTitle = (vehicle) => {
     return `${vehicle.year} ${vehicle.model}`;
   };
 
-  // Get the main image for the vehicle
   const getMainImage = (vehicle) => {
     return vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : "/api/placeholder/400/300";
   };
 
-  // Get the vehicle status (assuming all new vehicles are "Active")
   const getVehicleStatus = (vehicle) => {
     return vehicle.status || "Active";
   };
 
-  // Get badge color based on vehicle status
   const getStatusColor = (status) => {
     switch (status) {
       case "Active":
@@ -122,21 +113,34 @@ const VehicleListings = () => {
     }
   };
 
-  // Format price with commas
   const formatPrice = (price) => {
     return price ? price.toLocaleString() : "0";
   };
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
 
+  // Render skeletons during initial loading
+  const renderSkeletons = () => {
+    return Array(6).fill(0).map((_, index) => (
+      <VehicleSkeleton key={`skeleton-${index}`} />
+    ));
+  };
+
   if (status === "loading") {
     return (
-      <div className="container mx-auto p-4 flex justify-center items-center h-64">
-        <p>Loading...</p>
+      <div className="container mx-auto p-4 ">
+        <div className="flex justify-center items-center mb-7">
+          <div className="shadow-md w-fit border border-black rounded-lg p-6 mb-8">
+            <div className="h-7 bg-gray-300 rounded w-64 animate-pulse"></div>
+            <div className="h-5 bg-gray-300 rounded w-48 mt-2 animate-pulse"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {renderSkeletons()}
+        </div>
       </div>
     );
   }
@@ -154,8 +158,16 @@ const VehicleListings = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 flex justify-center items-center h-64">
-        <p>Loading vehicles...</p>
+      <div className="container mx-auto p-4">
+        <div className="flex justify-center items-center mb-7">
+          <div className="shadow-md w-fit border border-black rounded-lg p-6 mb-8">
+            <div className="h-7 bg-gray-300 rounded w-64 animate-pulse"></div>
+            <div className="h-5 bg-gray-300 rounded w-48 mt-2 animate-pulse"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {renderSkeletons()}
+        </div>
       </div>
     );
   }
@@ -173,7 +185,7 @@ const VehicleListings = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-center items-center mb-7 cursor-pointer">
+      <div className="flex justify-center mt-16 items-center mb-7 cursor-pointer">
         <div className="shadow-md w-fit border border-black rounded-lg p-6 mb-8">
           <h1 className="text-2xl font-bold text-black">My Vehicle Listings</h1>
           <p className="text-gray-500 mt-1">
@@ -235,10 +247,10 @@ const VehicleListings = () => {
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                   <span>Posted {formatDate(vehicle.createdAt)}</span>
                   <div className="flex items-center space-x-4">
-                  <span className="flex items-center">
-                    <EyeIcon className="w-4 h-4 mr-1" />
-                    {vehicle.viewers ? vehicle.viewers.length : 0}
-                  </span>
+                    <span className="flex items-center">
+                      <EyeIcon className="w-4 h-4 mr-1" />
+                      {vehicle.viewers ? vehicle.viewers.length : 0}
+                    </span>
                     <span className="flex items-center">
                       <BookmarkIcon className="w-4 h-4 mr-1" />
                       {vehicle.saves || 0}

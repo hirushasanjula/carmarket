@@ -4,7 +4,7 @@ import connectToDatabase from "@/lib/mongodb";
 import Vehicle from "@/models/vehicle";
 import User from "@/models/user";
 import { auth } from "@/auth";
-import { uploadToCloudinary } from "@/lib/cloudinary";
+
 
 // Get vehicle by ID
 export async function GET(request, { params }) {

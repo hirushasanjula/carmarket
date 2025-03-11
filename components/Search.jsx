@@ -1,21 +1,51 @@
-import React from "react";
-import { CiSearch } from "react-icons/ci";
+"use client";
 
-const SearchBar = () => {
+import { Search } from "lucide-react";
+import { useState } from "react";
+
+const SearchBar = ({ scrolled }) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log("Searching for:", searchQuery);
+    setSearchQuery("");
+    setIsExpanded(false);
+  };
+
   return (
-    <div className="flex justify-center items-center m-6">
-      <div className="flex items-center gap-2 bg-gray-200 bg-opacity-40 p-2 w-full max-w-xs sm:max-w-sm md:max-w-md rounded-full">
-        <div className="flex justify-center items-center w-6 h-6 p-1 ">
-          <div className="w-4 h-4  rounded-full">
-            <CiSearch width={24} height={24} />
-          </div>
-        </div>
+    <div
+      className={`relative transition-all duration-300 ${
+        isExpanded ? "w-64" : "w-10"
+      }`}
+    >
+      <form onSubmit={handleSearch} className="flex items-center">
         <input
           type="text"
-          placeholder="Search"
-          className="flex-grow bg-transparent outline-none text-black placeholder-gray-500"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search cars..."
+          className={`peer rounded-full py-2 pl-9 pr-4 text-sm outline-none transition-all duration-300 ${
+            isExpanded ? "w-full opacity-100" : "w-0 opacity-0"
+          } ${
+            scrolled
+              ? "bg-gray-100 placeholder-gray-500 text-gray-800 focus:ring-2 focus:ring-blue-500/50"
+              : "bg-white placeholder-blue-200 text-gray-800 focus:ring-2 focus:ring-blue-500/50"
+          }`}
         />
-      </div>
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`absolute left-0 top-0 p-2 rounded-full transition-all duration-300 ${
+            scrolled
+              ? "text-blue-600 hover:bg-blue-50"
+              : "text-blue-600 hover:bg-blue-100"
+          }`}
+        >
+          <Search size={16} />
+        </button>
+      </form>
     </div>
   );
 };

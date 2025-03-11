@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Calendar, Fuel, Gauge, ArrowRight, Heart } from "lucide-react";
+import { Calendar, Fuel, Gauge, ArrowRight, Heart, Car } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -82,27 +82,62 @@ const MostViewedVehicles = () => {
     return differenceInDays < 7;
   };
 
+  // Vehicle Card Skeleton component
+  const VehicleCardSkeleton = () => (
+    <div className="bg-white rounded-xl shadow-md overflow-hidden h-full animate-pulse">
+      <div className="h-40 bg-gray-100"></div>
+      <div className="p-3">
+        <div className="mb-2">
+          <div className="h-5 bg-gray-100 rounded w-3/4 mb-1"></div>
+          <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+        </div>
+        <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3">
+          <div className="h-3 bg-gray-100 rounded"></div>
+          <div className="h-3 bg-gray-100 rounded"></div>
+          <div className="h-3 bg-gray-100 rounded"></div>
+          <div className="h-3 bg-gray-100 rounded"></div>
+        </div>
+        <div className="flex justify-between items-center mb-3">
+          <div className="w-1/2">
+            <div className="h-3 bg-gray-100 rounded w-1/2 mb-1"></div>
+            <div className="h-5 bg-gray-100 rounded w-3/4"></div>
+          </div>
+          <div className="w-1/3">
+            <div className="h-3 bg-gray-100 rounded w-full mb-1"></div>
+            <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+          </div>
+        </div>
+        <div className="w-full h-8 bg-gray-100 rounded-lg"></div>
+      </div>
+    </div>
+  );
+
+  // Header Skeleton component
+  const HeaderSkeleton = () => (
+    <div className="text-center mb-8 animate-pulse">
+      <div className="h-7 bg-gray-100 rounded w-56 mx-auto mb-2"></div>
+      <div className="h-4 bg-gray-100 rounded w-64 mx-auto"></div>
+    </div>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Most Viewed Vehicles</h1>
-        <p className="text-sm text-gray-500 mt-2">Check out the top trending rides!</p>
-      </div>
+      {loading ? (
+        <HeaderSkeleton />
+      ) : (
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">Most Viewed Vehicles</h1>
+          <p className="text-sm text-gray-500 mt-2">Check out the top trending rides!</p>
+        </div>
+      )}
 
       {/* Vehicle Listings */}
       {loading ? (
-        <div className="flex justify-center items-center h-48">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-            <div className="flex-1 space-y-3 py-1">
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, index) => (
+            <VehicleCardSkeleton key={index} />
+          ))}
         </div>
       ) : error ? (
         <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mx-auto max-w-lg">
