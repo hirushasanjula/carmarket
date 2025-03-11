@@ -4,9 +4,9 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import User from "@/models/user";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const authConfig = {
   session: {
-    strategy: "jwt", // Use JWT session strategy
+    strategy: "jwt",
   },
   providers: [
     Credentials({
@@ -16,26 +16,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       authorize: async (credentials) => {
         try {
-          // Connect to the database
           await connectToDatabase();
-
-          // Find user by email
           const user = await User.findOne({ email: credentials?.email });
 
           if (user && await bcrypt.compare(credentials.password, user.password)) {
-            // Return user data for session if credentials match
             return {
               id: user._id.toString(),
               email: user.email,
               name: user.name,
-              role: user.role, // Include role
+              role: user.role,
             };
           }
-
-          // Return null if user doesn't exist or credentials don't match
           return null;
         } catch (error) {
-          // Handle error and return null if authentication fails
           console.log("Authentication error:", error);
           return null;
         }
@@ -43,27 +36,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    // Customize JWT token to include role
+    // Same callbacks as before
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        token.role = user.role; // Add role to token
+        token.role = user.role;
       }
       return token;
     },
-    // Customize session to include role from token
     async session({ session, token }) {
       session.user.id = token.id;
       session.user.email = token.email;
       session.user.name = token.name;
-      session.user.role = token.role; // Add role to session
+      session.user.role = token.role;
       return session;
     },
   },
   pages: {
-    signIn: "/sign-in", // Custom sign-in page path
+    signIn: "/sign-in",
   },
-  secret: process.env.AUTH_SECRET, // Use secret for JWT
-});
+  secret: process.env.AUTH_SECRET,
+};
+
+export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
