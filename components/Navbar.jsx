@@ -144,8 +144,8 @@ const Navbar = () => {
                 <Link href="/sign-in"
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${
                     scrolled 
-                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
-                      : 'bg-blue-700/30 text-white hover:bg-blue-700/50'
+                      ? 'bg-blue-100  text-blue-700 hover:bg-blue-200' 
+                      : 'bg-blue-700/30 text-white hover:bg-blue-700/50 border-2 border-white'
                   }`}>
                   Login
                 </Link>
