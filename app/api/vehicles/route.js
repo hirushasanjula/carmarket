@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import Vehicle from "@/models/vehicle";
 import User from "@/models/user";
-import { auth } from "@/auth";
+import { auth } from "../auth/[...nextauth]/route";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export async function POST(request) {

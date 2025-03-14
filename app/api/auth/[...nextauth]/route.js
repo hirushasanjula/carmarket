@@ -99,4 +99,8 @@ export const authOptions = {
 
 const { handlers, signIn, signOut, auth } = NextAuth(authOptions);
 
+// Export handlers for GET and POST
 export { handlers as GET, handlers as POST };
+
+// Explicitly export auth for use in other routes
+export { auth };
