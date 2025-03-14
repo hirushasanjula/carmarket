@@ -4,18 +4,20 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import User from "@/models/user";
 
-console.log("Initializing NextAuth with env:", {
+console.log("NextAuth initialization:", {
   MONGO: !!process.env.MONGO,
   AUTH_SECRET: !!process.env.AUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
 });
 
 if (!process.env.AUTH_SECRET) {
-  console.error("AUTH_SECRET is not defined");
+  console.error("AUTH_SECRET is missing");
+  throw new Error("AUTH_SECRET is required");
 }
 
 if (!process.env.MONGO) {
-  console.error("MONGO is not defined");
+  console.error("MONGO is missing");
+  throw new Error("MONGO is required");
 }
 
 export const authOptions = {
@@ -31,7 +33,6 @@ export const authOptions = {
       authorize: async (credentials) => {
         try {
           console.log("Authorize: Starting for", credentials?.email);
-          console.log("Authorize: Connecting to MongoDB...");
           await connectToDatabase();
           console.log("Authorize: MongoDB connected");
 
@@ -56,7 +57,7 @@ export const authOptions = {
           };
         } catch (error) {
           console.error("Authorize error:", error.message, error.stack);
-          return null;
+          return null; // Return null instead of throwing
         }
       },
     }),
@@ -73,21 +74,23 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log("Session callback: Token:", token);
+      console.log("Session callback: Starting with token:", token);
       try {
         if (!token) {
           console.log("Session callback: No token provided");
-          return session;
+          return session; // Return empty session if no token
         }
-        session.user.id = token.id;
-        session.user.email = token.email;
-        session.user.name = token.name;
-        session.user.role = token.role;
+        session.user = {
+          id: token.id,
+          email: token.email,
+          name: token.name,
+          role: token.role,
+        };
         console.log("Session callback: Success:", session);
         return session;
       } catch (error) {
         console.error("Session callback error:", error.message, error.stack);
-        return session;
+        return session; // Fallback to avoid 500
       }
     },
   },
@@ -99,8 +102,5 @@ export const authOptions = {
 
 const { handlers, signIn, signOut, auth } = NextAuth(authOptions);
 
-// Export handlers for GET and POST
 export { handlers as GET, handlers as POST };
-
-// Explicitly export auth for use in other routes
-export { auth };
+export { auth }; // Ensure auth is exported

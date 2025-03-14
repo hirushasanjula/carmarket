@@ -167,7 +167,10 @@ export async function POST(request) {
 export async function GET(request) {
   let connection;
   try {
+    console.log("Vehicles route: Fetching session...");
     const session = await auth();
+    console.log("Vehicles route: Session:", session);
+
     const url = new URL(request.url);
     const showAll = url.searchParams.get("showAll") === "true";
     const searchQuery = url.searchParams.get("search")?.trim();
@@ -175,88 +178,52 @@ export async function GET(request) {
     const model = url.searchParams.get("model")?.trim();
     const year = url.searchParams.get("year")?.trim();
     const fuelType = url.searchParams.get("fuelType")?.trim();
-    const minPrice = url.searchParams.get("minPrice")?.trim();
-    const maxPrice = url.searchParams.get("maxPrice")?.trim();
+    const minPrice = url.searchParams.get("minPrice") ? parseInt(url.searchParams.get("minPrice")) : null;
+    const maxPrice = url.searchParams.get("maxPrice") ? parseInt(url.searchParams.get("maxPrice")) : null;
 
     connection = await connectToDatabase();
+    console.log("Vehicles route: MongoDB connected");
 
-    let query = { status: "Active" };
-
-    if (session && session.user && !showAll) {
-      const userEmail = session.user.email;
-      if (!userEmail) {
-        return NextResponse.json({ error: "User email not found in session" }, { status: 400 });
-      }
-      const user = await User.findOne({ email: userEmail });
-      if (!user) {
-        return NextResponse.json({ error: "User not found in database" }, { status: 404 });
-      }
-      query = { user: user._id, status: { $in: ["Pending", "Active"] } };
+    let query = {};
+    if (!showAll && !session?.user) {
+      query.active = true; // Only active vehicles for unauthenticated users
     }
-
-    // Apply filters
     if (searchQuery) {
-      query.$or = [{ model: { $regex: searchQuery, $options: "i" } }];
-      const numericQuery = Number(searchQuery);
-      const isValidYear = !isNaN(numericQuery) && Number.isInteger(numericQuery) && numericQuery >= 1900 && numericQuery <= new Date().getFullYear();
-      if (isValidYear) {
-        query.$or.push({ year: numericQuery });
-      }
+      query.$or = [
+        { model: { $regex: searchQuery, $options: "i" } },
+        { description: { $regex: searchQuery, $options: "i" } },
+      ];
     }
-
-    if (vehicleType) {
-      query.vehicle_type = { $regex: vehicleType, $options: "i" };
-    }
-
-    if (model) {
-      query.model = { $regex: model, $options: "i" };
-    }
-
-    if (year) {
-      const numericYear = Number(year);
-      if (!isNaN(numericYear) && Number.isInteger(numericYear) && numericYear >= 1900 && numericYear <= new Date().getFullYear()) {
-        query.year = numericYear;
-      }
-    }
-
-    if (fuelType) {
-      query.fuelType = { $regex: fuelType, $options: "i" };
-    }
-
+    if (vehicleType) query.vehicle_type = { $regex: vehicleType, $options: "i" };
+    if (model) query.model = { $regex: model, $options: "i" };
+    if (year) query.year = parseInt(year);
+    if (fuelType) query.fuelType = { $regex: fuelType, $options: "i" };
     if (minPrice || maxPrice) {
       query.price = {};
-      if (minPrice) {
-        const min = Number(minPrice);
-        if (!isNaN(min)) query.price.$gte = min;
-      }
-      if (maxPrice) {
-        const max = Number(maxPrice);
-        if (!isNaN(max)) query.price.$lte = max;
-      }
+      if (minPrice) query.price.$gte = minPrice;
+      if (maxPrice) query.price.$lte = maxPrice;
     }
 
-    const vehicles = await Vehicle.find(query)
-      .sort({ createdAt: -1 })
-      .populate("user", "name email")
-      .exec();
+    const vehicles = await Vehicle.find(query);
+    console.log("Vehicles fetched:", vehicles.length, "Filters:", {
+      searchQuery,
+      vehicleType,
+      model,
+      year,
+      fuelType,
+      minPrice,
+      maxPrice,
+    });
 
-    console.log("Vehicles fetched:", vehicles.length, "Filters:", { searchQuery, vehicleType, model, year, fuelType, minPrice, maxPrice });
-    const vehicleData = vehicles.map((v) => v.toObject());
-
-    return NextResponse.json(vehicleData, { status: 200 });
+    return new Response(JSON.stringify(vehicles), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("Error fetching vehicles:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch vehicles", details: error.message },
-      { status: 500 }
-    );
-  } finally {
-    if (connection && typeof connection.close === "function") {
-      try {
-        await connection.close();
-      } catch (closeError) {
-        console.error("Error closing database connection:", closeError);
-      }
-    }
+    console.error("Vehicles route error:", error.message, error.stack);
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
