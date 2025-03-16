@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Phone, Mail, MapPin, Share2, Flag, ArrowLeft } from "lucide-react";
+import { Phone, Mail, MapPin, Share2, Flag, ArrowLeft, MessageSquare, XCircleIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import RecommendedVehicles from "@/components/RecommendedVehicles";
@@ -11,6 +11,9 @@ export default function VehicleDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
   const params = useParams();
   const router = useRouter();
   const vehicleId = params.id;
@@ -21,7 +24,7 @@ export default function VehicleDetailPage() {
       try {
         setLoading(true);
         const response = await fetch(`/api/vehicles/${vehicleId}`, {
-          credentials: "include", // Optional, safe to include
+          credentials: "include",
         });
         if (!response.ok) {
           if (response.status === 404) throw new Error("Vehicle not found");
@@ -39,7 +42,6 @@ export default function VehicleDetailPage() {
 
     if (vehicleId) {
       fetchVehicleDetails();
-      // Record view only if authenticated
       if (status === "authenticated") {
         fetch("/api/interactions", {
           method: "POST",
@@ -51,12 +53,29 @@ export default function VehicleDetailPage() {
     }
   }, [vehicleId, status]);
 
+  // Fetch existing messages when chat opens
+  useEffect(() => {
+    if (!isChatOpen || !vehicle?.user?._id || status !== "authenticated") return;
+
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(`/api/messages?vehicleId=${vehicleId}&receiverId=${vehicle.user._id}`);
+        if (!response.ok) throw new Error("Failed to fetch messages");
+        const { messages } = await response.json();
+        setChatMessages(messages);
+      } catch (err) {
+        console.error("Error fetching chat messages:", err);
+      }
+    };
+
+    fetchMessages();
+  }, [isChatOpen, vehicle, vehicleId, status]);
+
   const handleLike = async () => {
     if (status !== "authenticated") {
       alert("Please log in to like this vehicle");
       return;
     }
-
     try {
       const res = await fetch("/api/interactions", {
         method: "POST",
@@ -69,6 +88,30 @@ export default function VehicleDetailPage() {
       console.log("Like recorded:", data);
     } catch (error) {
       console.error("Error liking vehicle:", error);
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !vehicle?.user?._id || status !== "authenticated") return;
+
+    try {
+      const response = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          receiverId: vehicle.user._id,
+          content: newMessage,
+          vehicleId,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to send message");
+      const { message } = await response.json();
+      setChatMessages((prev) => [message, ...prev]);
+      setNewMessage("");
+    } catch (err) {
+      console.error("Error sending message:", err);
+      alert("Failed to send message");
     }
   };
 
@@ -189,8 +232,11 @@ export default function VehicleDetailPage() {
                   <Phone size={20} /> <span>{vehicle.user?.mobile || "Contact seller"}</span>
                 </button>
                 {vehicle.user && vehicle.user.email && (
-                  <button className="w-full flex items-center justify-center gap-2 bg-white text-blue-600 border-2 border-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors">
-                    <Mail size={20} /> <span>Email Seller</span>
+                  <button
+                    onClick={() => status === "authenticated" ? setIsChatOpen(true) : alert("Please log in to message the seller")}
+                    className="w-full flex items-center justify-center gap-2 bg-white text-blue-600 border-2 border-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    <MessageSquare size={20} /> <span>Message Seller</span>
                   </button>
                 )}
                 <button
@@ -211,6 +257,62 @@ export default function VehicleDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Chat Modal */}
+        {isChatOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-md p-6 relative">
+              <button
+                onClick={() => setIsChatOpen(false)}
+                className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+              >
+                <XCircleIcon size={24} />
+              </button>
+              <h2 className="text-xl font-bold mb-4">
+                Message {vehicle.user.name} about {vehicle.year} {vehicle.model}
+              </h2>
+              <div className="h-64 overflow-y-auto mb-4 flex flex-col gap-2">
+                {chatMessages.length === 0 ? (
+                  <p className="text-gray-500 text-center">No messages yet</p>
+                ) : (
+                  chatMessages
+                    .slice()
+                    .reverse()
+                    .map((msg) => (
+                      <div
+                        key={msg._id}
+                        className={`p-3 rounded-lg max-w-[70%] ${
+                          msg.sender._id === session.user.id
+                            ? "bg-blue-500 text-white self-end"
+                            : "bg-gray-200 text-gray-800 self-start"
+                        }`}
+                      >
+                        <p>{msg.content}</p>
+                        <p className="text-xs mt-1 opacity-75">
+                          {new Date(msg.createdAt).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    ))
+                )}
+              </div>
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type your message..."
+                  className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Send
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
         <RecommendedVehicles currentVehicleId={vehicleId} />
       </div>
