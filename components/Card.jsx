@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Car, Truck, Compass, Calendar, Fuel, Gauge, ArrowRight, Heart } from "lucide-react";
+import { Car, Truck, Compass, Calendar, Fuel, Gauge, ArrowRight, Heart, MapPin } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
 
 const VehicleSelectionBar = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -44,11 +43,10 @@ const VehicleSelectionBar = () => {
     try {
       setLoading(true);
       const response = await fetch("/api/vehicles?showAll=true", {
-        credentials: "include", // Optional now, but safe to include
+        credentials: "include",
       });
       if (!response.ok) throw new Error(`Failed to fetch vehicles: ${response.status}`);
       const data = await response.json();
-      console.log("Fetched vehicles:", data);
       setVehicles(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (error) {
@@ -63,10 +61,7 @@ const VehicleSelectionBar = () => {
       const response = await fetch("/api/saved-vehicles", {
         credentials: "include",
       });
-      if (!response.ok) {
-        console.log("Saved vehicles fetch failed (likely not logged in):", response.status);
-        return;
-      }
+      if (!response.ok) return;
       const data = await response.json();
       setSavedVehicles(data.map((sv) => sv.vehicle._id));
     } catch (error) {
@@ -80,7 +75,7 @@ const VehicleSelectionBar = () => {
       e.stopPropagation();
     }
     if (status !== "authenticated") {
-      router.push("/api/auth/signin"); // Redirect to login page
+      router.push("/api/auth/signin");
       return;
     }
     try {
@@ -103,10 +98,6 @@ const VehicleSelectionBar = () => {
 
   const filteredVehicles = vehicles.filter((vehicle) => vehicle.vehicle_type === selectedCategory);
   const displayedVehicles = isDesktop ? filteredVehicles.slice(0, 5) : filteredVehicles;
-
-  console.log(
-    `Selected Category: ${selectedCategory}, Total Vehicles: ${vehicles.length}, Filtered Vehicles: ${filteredVehicles.length}, Displayed: ${displayedVehicles.length}, Is Desktop: ${isDesktop}`
-  );
 
   const formatPrice = (price) => (price ? price.toLocaleString() : "0");
   const getMainImage = (vehicle) =>
@@ -272,20 +263,20 @@ const VehicleSelectionBar = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3">
-                      <div className="flex items-center text-xs text-gray-600">
+                    <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3 text-xs text-gray-600">
+                      <div className="flex items-center">
                         <Calendar size={12} className="mr-1 text-blue-500" />
                         <span>{vehicle.year}</span>
                       </div>
-                      <div className="flex items-center text-xs text-gray-600">
+                      <div className="flex items-center">
                         <Gauge size={12} className="mr-1 text-blue-500" />
                         <span>{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : "N/A"}</span>
                       </div>
-                      <div className="flex items-center text-xs text-gray-600">
+                      <div className="flex items-center">
                         <Fuel size={12} className="mr-1 text-blue-500" />
                         <span>{vehicle.fuelType || "N/A"}</span>
                       </div>
-                      <div className="flex items-center text-xs text-gray-600">
+                      <div className="flex items-center">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-3 w-3 mr-1 text-blue-500"
@@ -302,11 +293,19 @@ const VehicleSelectionBar = () => {
                         </svg>
                         <span>{vehicle.transmission || "N/A"}</span>
                       </div>
+                      <div className="flex items-center">
+                        <MapPin size={12} className="mr-1 text-blue-500" />
+                        <span>{vehicle.location?.region || "N/A"}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <MapPin size={12} className="mr-1 text-blue-500" />
+                        <span>{vehicle.location?.city || "N/A"}</span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center mb-3">
                       <div>
                         <span className="text-xs text-gray-500">Price</span>
-                        <div className="text-lg font-bold text-blue-600">${formatPrice(vehicle.price)}</div>
+                        <div className="text-lg font-bold text-blue-600">Rs. {formatPrice(vehicle.price)}</div>
                       </div>
                       {vehicle.user && (
                         <div className="text-right">

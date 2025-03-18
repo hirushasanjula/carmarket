@@ -222,9 +222,10 @@ export default function VehicleDetailPage() {
                 <h1 className="text-2xl font-bold text-gray-900">{vehicle.year} {vehicle.model}</h1>
                 <p className="text-3xl font-bold text-blue-600 mt-2">Rs. {formatPrice(vehicle.price)}</p>
               </div>
-              {vehicle.location && vehicle.location.coordinates && (
+              {vehicle.location && (
                 <div className="flex items-center text-gray-600 mb-6">
-                  <MapPin size={20} className="mr-2" /> Location available
+                  <MapPin size={20} className="mr-2" />
+                  <span>{vehicle.location.region}, {vehicle.location.city}</span>
                 </div>
               )}
               <div className="space-y-3">

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { MapPinIcon, XCircleIcon } from 'lucide-react';
+import { XCircleIcon } from 'lucide-react';
 
 export default function VehicleListingForm() {
   const fileInputRef = useRef(null);
@@ -17,8 +17,8 @@ export default function VehicleListingForm() {
     fuelType: '',
     transmission: '',
     location: {
-      coordinates: null,
-      address: '',
+      region: '',
+      city: '',
     },
     description: '',
     images: [],
@@ -27,14 +27,17 @@ export default function VehicleListingForm() {
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [locationSearching, setLocationSearching] = useState(false);
   
-  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
     if (name === 'year' || name === 'price' || name === 'mileage') {
       setFormData({ ...formData, [name]: value ? Number(value) : '' });
+    } else if (name === 'region' || name === 'city') {
+      setFormData({
+        ...formData,
+        location: { ...formData.location, [name]: value },
+      });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -43,14 +46,11 @@ export default function VehicleListingForm() {
   const handleImageUpload = (e) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      
       if (formData.images.length + newFiles.length > 5) {
         setError('Maximum 5 images allowed');
         return;
       }
-      
       setFormData({ ...formData, images: [...formData.images, ...newFiles] });
-      
       const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
       setImagePreviewUrls([...imagePreviewUrls, ...newPreviewUrls]);
     }
@@ -59,99 +59,51 @@ export default function VehicleListingForm() {
   const removeImage = (index) => {
     const newImages = [...formData.images];
     newImages.splice(index, 1);
-    
     const newPreviews = [...imagePreviewUrls];
-    URL.revokeObjectURL(newPreviews[index]); // Release object URL
+    URL.revokeObjectURL(newPreviews[index]);
     newPreviews.splice(index, 1);
-    
     setFormData({ ...formData, images: newImages });
     setImagePreviewUrls(newPreviews);
-  };
-  
-  const getCurrentLocation = async () => {
-    if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
-      return;
-    }
-    
-    setLocationSearching(true);
-    
-    try {
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
-      });
-      
-      const { latitude, longitude } = position.coords;
-      
-      const address = `Location at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-      
-      setFormData({
-        ...formData,
-        location: {
-          coordinates: [longitude, latitude], // MongoDB uses [longitude, latitude]
-          address
-        }
-      });
-    } catch (err) {
-      setError('Failed to get your location');
-    } finally {
-      setLocationSearching(false);
-    }
   };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
-    
-    if (!formData.model || !formData.year || !formData.price || !formData.vehicle_type || !formData.vehicle_condition) {
-      setError('Please fill in all required fields');
+  
+    if (!formData.model || !formData.year || !formData.price || !formData.vehicle_type || 
+        !formData.vehicle_condition || !formData.location.region || !formData.location.city) {
+      setError('Please fill in all required fields, including region and city');
       setIsSubmitting(false);
       return;
     }
-    
+  
     try {
       const submitData = new FormData();
-      
       Object.entries(formData).forEach(([key, value]) => {
         if (key === 'images') {
-          formData.images.forEach(file => {
-            submitData.append('images', file);
-          });
+          formData.images.forEach(file => submitData.append('images', file));
         } else if (key === 'location') {
           submitData.append(key, JSON.stringify(value));
         } else {
           submitData.append(key, String(value));
         }
       });
-      
-      console.log('Submitting form data...');
-      
-      // Send the data to the API
+  
       const response = await fetch('/api/vehicles', {
         method: 'POST',
         body: submitData,
       });
-      
-      console.log('Response status:', response.status);
-      
-      // Always try to parse the response, even if not 2xx
-      const result = await response.json().catch(err => {
-        console.error('Failed to parse response as JSON:', err);
-        return { error: 'Invalid response format' };
-      });
-      
-      console.log('Response data:', result);
-      
+  
+      const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || result.details || 'Failed to create vehicle listing');
+        throw new Error(result.error || result.details || 'Failed to create vehicle listing'); // Line ~123
       }
-      
       if (!result.success) {
         throw new Error(result.message || 'Operation did not complete successfully');
       }
-      
-      // Reset form after successful submission
+  
+      // Reset form
       setFormData({
         vehicle_type: '',
         model: '',
@@ -162,24 +114,17 @@ export default function VehicleListingForm() {
         fuelType: '',
         transmission: '',
         location: {
-          coordinates: null,
-          address: '',
+          region: '',
+          city: '',
         },
         description: '',
         images: [],
       });
       setImagePreviewUrls([]);
-      
-      // Show success message
       alert('Vehicle listing created successfully! It is pending admin approval.');
-      
     } catch (err) {
       console.error('Form submission error:', err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
+      setError(err.message || 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -196,7 +141,6 @@ export default function VehicleListingForm() {
       )}
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Vehicle Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="vehicle_type" className="block text-sm font-medium text-gray-700 mb-1">
@@ -217,7 +161,6 @@ export default function VehicleListingForm() {
               <option value="double-cab">Double Cab</option>
             </select>
           </div>
-          
           <div>
             <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-1">
               Model <span className="text-red-500">*</span>
@@ -235,7 +178,6 @@ export default function VehicleListingForm() {
           </div>
         </div>
         
-        {/* Vehicle Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label htmlFor="vehicle_condition" className="block text-sm font-medium text-gray-700 mb-1">
@@ -255,7 +197,6 @@ export default function VehicleListingForm() {
               <option value="unregister">Unregistered</option>
             </select>
           </div>
-          
           <div>
             <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">
               Year <span className="text-red-500">*</span>
@@ -272,7 +213,6 @@ export default function VehicleListingForm() {
               required
             />
           </div>
-          
           <div>
             <label htmlFor="fuelType" className="block text-sm font-medium text-gray-700 mb-1">
               Fuel Type
@@ -291,7 +231,6 @@ export default function VehicleListingForm() {
               <option value="Hybrid">Hybrid</option>
             </select>
           </div>
-          
           <div>
             <label htmlFor="transmission" className="block text-sm font-medium text-gray-700 mb-1">
               Transmission
@@ -310,14 +249,13 @@ export default function VehicleListingForm() {
           </div>
         </div>
         
-        {/* Price and Mileage */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
               Price <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">Rs.</span>
               <input
                 type="number"
                 id="price"
@@ -331,7 +269,6 @@ export default function VehicleListingForm() {
               />
             </div>
           </div>
-          
           <div>
             <label htmlFor="mileage" className="block text-sm font-medium text-gray-700 mb-1">
               Mileage
@@ -347,40 +284,47 @@ export default function VehicleListingForm() {
                 placeholder="e.g. 50000"
                 min="0"
               />
-              <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">
-                km
-              </span>
+              <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">km</span>
             </div>
           </div>
         </div>
         
-        {/* Location */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Location</label>
-          <div className="flex items-center space-x-2">
-            <input
-              type="text"
-              value={formData.location.address}
-              onChange={(e) => setFormData({
-                ...formData,
-                location: { ...formData.location, address: e.target.value }
-              })}
-              className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="Enter your location"
-            />
-            <button
-              type="button"
-              onClick={getCurrentLocation}
-              className="p-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              disabled={locationSearching}
-            >
-              <MapPinIcon className="w-5 h-5" />
-            </button>
+          <label className="block text-sm font-medium text-gray-700">Location <span className="text-red-500">*</span></label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
+                Region
+              </label>
+              <input
+                type="text"
+                id="region"
+                name="region"
+                value={formData.location.region}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="e.g. Western Province"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                City
+              </label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                value={formData.location.city}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="e.g. Colombo"
+                required
+              />
+            </div>
           </div>
-          {locationSearching && <p className="text-sm text-gray-500">Getting your location...</p>}
         </div>
         
-        {/* Vehicle Description */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
             Description
@@ -396,12 +340,10 @@ export default function VehicleListingForm() {
           />
         </div>
         
-        {/* Image Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Upload Images (Max 5)
           </label>
-          
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
             {imagePreviewUrls.map((url, index) => (
               <div key={index} className="relative group">
@@ -423,7 +365,6 @@ export default function VehicleListingForm() {
                 </button>
               </div>
             ))}
-            
             {formData.images.length < 5 && (
               <button
                 type="button"
@@ -436,7 +377,6 @@ export default function VehicleListingForm() {
               </button>
             )}
           </div>
-          
           <input
             type="file"
             ref={fileInputRef}
@@ -447,7 +387,6 @@ export default function VehicleListingForm() {
           />
         </div>
         
-        {/* Submit Button */}
         <div className="flex justify-end">
           <button
             type="submit"

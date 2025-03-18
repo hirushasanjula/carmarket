@@ -1,4 +1,3 @@
-// app/api/vehicles/route.js
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import Vehicle from "@/models/vehicle";
@@ -11,7 +10,6 @@ export async function POST(request) {
   try {
     console.log("Vehicle API route called");
 
-    // Get the authenticated user
     const session = await auth();
     console.log("Session:", JSON.stringify(session, null, 2));
 
@@ -22,12 +20,10 @@ export async function POST(request) {
       );
     }
 
-    // Connect to the database
     console.log("Connecting to database...");
     connection = await connectToDatabase();
     console.log("Database connection established");
 
-    // Look up the user in the database by email
     const userEmail = session.user.email;
     if (!userEmail) {
       return NextResponse.json(
@@ -47,11 +43,9 @@ export async function POST(request) {
       );
     }
 
-    // Get the form data
     const formData = await request.formData();
     console.log("Form data keys:", [...formData.keys()]);
 
-    // Parse location data
     let location = {};
     try {
       const locationString = formData.get("location");
@@ -61,9 +55,19 @@ export async function POST(request) {
       }
     } catch (error) {
       console.error("Error parsing location:", error);
+      return NextResponse.json(
+        { error: "Invalid location format", details: error.message },
+        { status: 400 }
+      );
     }
 
-    // Handle image uploads to Cloudinary
+    if (!location.region || !location.city) {
+      return NextResponse.json(
+        { error: "Location must include region and city" },
+        { status: 400 }
+      );
+    }
+
     const imageFiles = formData.getAll("images");
     console.log("Number of image files:", imageFiles.length);
     const imageUrls = [];
@@ -87,7 +91,6 @@ export async function POST(request) {
 
     console.log("Image URLs:", imageUrls);
 
-    // Create a new vehicle listing
     const vehicleData = {
       user: user._id,
       vehicle_type: formData.get("vehicle_type"),
@@ -98,21 +101,21 @@ export async function POST(request) {
       mileage: formData.get("mileage") ? Number(formData.get("mileage")) : undefined,
       fuelType: formData.get("fuelType") || undefined,
       transmission: formData.get("transmission") || undefined,
-      location: location.coordinates
-        ? { type: "Point", coordinates: location.coordinates }
-        : undefined,
+      location: {
+        region: location.region,
+        city: location.city,
+      },
       description: formData.get("description") || undefined,
       images: imageUrls.length > 0 ? imageUrls : [],
-      status: "Pending", // Explicitly set for clarity
+      status: "Pending",
     };
 
     console.log("Vehicle data to save:", JSON.stringify(vehicleData, null, 2));
 
     console.log("Creating vehicle document...");
     const newVehicle = await Vehicle.create(vehicleData);
-    console.log("Vehicle created:", JSON.stringify(newVehicle, null, 2)); // Detailed log
+    console.log("Vehicle created:", JSON.stringify(newVehicle, null, 2));
 
-    // Verify the vehicle was saved
     console.log("Verifying vehicle was saved...");
     const savedVehicle = await Vehicle.findById(newVehicle._id);
     console.log("Saved vehicle:", JSON.stringify(savedVehicle, null, 2));
@@ -164,6 +167,7 @@ export async function POST(request) {
   }
 }
 
+// GET method unchanged
 export async function GET(request) {
   let connection;
   try {
@@ -194,7 +198,6 @@ export async function GET(request) {
       query = { user: user._id, status: { $in: ["Pending", "Active"] } };
     }
 
-    // Apply filters
     if (searchQuery) {
       query.$or = [{ model: { $regex: searchQuery, $options: "i" } }];
       const numericQuery = Number(searchQuery);
