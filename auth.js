@@ -42,10 +42,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       },
     }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
+ 
   ],
   callbacks: {
     // Customize JWT token to include role
@@ -66,31 +63,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.role = token.role; // Add role to session
       return session;
     },
-  },
-  async signIn({ user, account, profile }) {
-    if (account.provider === "google") {
-      try {
-        await connectToDatabase();
-        let existingUser = await User.findOne({ email: user.email });
-        if (!existingUser) {
-          // Create a new user if they don’t exist
-          existingUser = new User({
-            email: user.email,
-            name: user.name,
-            role: "user", // Default role
-            password: null, // No password for Google users
-          });
-          await existingUser.save();
-        }
-        user.id = existingUser._id.toString();
-        user.role = existingUser.role;
-        return true;
-      } catch (error) {
-        console.error("Error signing in with Google:", error);
-        return false;
-      }
-    }
-    return true; // Continue for Credentials provider
   },
 }, {
   pages: {
