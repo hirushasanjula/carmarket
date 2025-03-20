@@ -97,5 +97,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/sign-in", // Custom sign-in page path
   },
   secret: process.env.AUTH_SECRET, // Use secret for JWT
-  
+  trustHost: true,
 });
