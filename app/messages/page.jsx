@@ -28,7 +28,7 @@ export default function Messages() {
       if (!response.ok) throw new Error("Failed to fetch messages");
       const { messages } = await response.json();
       console.log("Fetched messages:", messages); // Debug log
-      setMessages(messages);
+      setMessages(messages || []); // Ensure messages is an array
       setLoading(false);
     } catch (err) {
       setError(err.message);
@@ -90,15 +90,15 @@ export default function Messages() {
   }
 
   return (
-    <div className="container mx-auto p-10 flex flex-col md:flex-row gap-6">
-      <div className="w-full mt-24 md:w-1/3 bg-white rounded-lg shadow-md p-4">
+    <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
+      <div className="w-full mt-20 md:w-1/3 bg-white rounded-lg shadow-md p-4">
         <h2 className="text-xl font-bold mb-4">Conversations</h2>
         {Object.keys(conversations).length === 0 ? (
           <p className="text-gray-600">No messages yet</p>
         ) : (
           Object.values(conversations).map((conv) => (
             <div
-              key={conv.user._id}
+              key={conv.user._id} // Unique key for conversation list
               onClick={() => {
                 setSelectedUser(conv.user);
                 conv.messages.forEach((msg) => {
@@ -122,33 +122,29 @@ export default function Messages() {
         )}
       </div>
 
-      <div className="w-full mt-24 md:w-2/3 bg-white rounded-lg shadow-md p-4">
+      <div className="w-full mt-20 md:w-2/3 bg-white rounded-lg shadow-md p-4">
         {selectedUser ? (
           <>
             <h2 className="text-xl font-bold mb-4">Chat with {selectedUser.name}</h2>
             <div className="h-96 overflow-y-auto mb-4 flex flex-col gap-2">
-              {(() => {
-                const msgs = conversations[selectedUser._id].messages;
-                console.log("Rendering messages for", selectedUser._id, ":", msgs);
-                return msgs
-                  .slice()
-                  .reverse()
-                  .map((msg, index) => (
-                    <div
-                      key={msg._id || `${selectedUser._id}-msg-${index}`} // Enhanced fallback
-                      className={`p-3 rounded-lg max-w-[70%] ${
-                        msg.sender._id === session.user.id
-                          ? "bg-blue-500 text-white self-end"
-                          : "bg-gray-200 text-gray-800 self-start"
-                      }`}
-                    >
-                      <p>{msg.content}</p>
-                      <p className="text-xs mt-1 opacity-75">
-                        {new Date(msg.createdAt).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  ));
-              })()}
+              {conversations[selectedUser._id]?.messages
+                .slice()
+                .reverse()
+                .map((msg) => (
+                  <div
+                    key={msg._id} // Rely solely on msg._id, assuming it's unique
+                    className={`p-3 rounded-lg max-w-[70%] ${
+                      msg.sender._id === session.user.id
+                        ? "bg-blue-500 text-white self-end"
+                        : "bg-gray-200 text-gray-800 self-start"
+                    }`}
+                  >
+                    <p>{msg.content}</p>
+                    <p className="text-xs mt-1 opacity-75">
+                      {new Date(msg.createdAt).toLocaleTimeString()}
+                    </p>
+                  </div>
+                ))}
             </div>
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <input
