@@ -1,5 +1,3 @@
-// components/Edit Box.jsx
-
 "use client";
 
 import React, { useState } from "react";
@@ -8,16 +6,23 @@ import { X } from "lucide-react";
 const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     ...vehicle,
-    // Handle special cases
-    location: vehicle.location ? JSON.stringify(vehicle.location) : "",
+    location: vehicle.location || { region: "", city: "" }, // Initialize as object
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    
-    // Handle number inputs
-    if (type === "number") {
+
+    if (name === "region" || name === "city") {
+      // Handle nested location fields
+      setFormData({
+        ...formData,
+        location: {
+          ...formData.location,
+          [name]: value,
+        },
+      });
+    } else if (type === "number") {
       setFormData({
         ...formData,
         [name]: value === "" ? "" : Number(value),
@@ -29,34 +34,31 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
       });
     }
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      // Format the data
+      // Format the data for submission
       const submitData = { ...formData };
-      
-      // Parse location back to object if it's a string
-      if (typeof submitData.location === "string" && submitData.location) {
-        try {
-          submitData.location = JSON.parse(submitData.location);
-        } catch (error) {
-          console.error("Error parsing location:", error);
-        }
+
+      // Ensure location is an object (no parsing needed since we manage it directly)
+      if (!submitData.location.region || !submitData.location.city) {
+        throw new Error("Region and city are required");
       }
-      
+
       // Call the parent's onSave function
       await onSave(submitData);
+      onClose(); // Close modal on success
     } catch (error) {
       console.error("Error updating vehicle:", error);
-      alert("Failed to save changes. Please try again.");
+      alert(error.message || "Failed to save changes. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-2xl max-h-screen overflow-y-auto">
@@ -66,7 +68,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
             <X size={24} />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -87,7 +89,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 <option value="double-cab">Double Cab</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Model
@@ -101,7 +103,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Condition
@@ -119,7 +121,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 <option value="unregister">Unregistered</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Year
@@ -133,10 +135,10 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price ($)
+                Price (Rs.)
               </label>
               <input
                 type="number"
@@ -147,7 +149,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mileage (km)
@@ -160,7 +162,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 className="w-full p-2 border rounded-md"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Fuel Type
@@ -177,7 +179,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 <option value="Electric">Electric</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Transmission
@@ -193,8 +195,37 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 <option value="Automatic">Automatic</option>
               </select>
             </div>
+
+            {/* New Location Fields */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Region
+              </label>
+              <input
+                type="text"
+                name="region"
+                value={formData.location.region || ""}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                City
+              </label>
+              <input
+                type="text"
+                name="city"
+                value={formData.location.city || ""}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md"
+                required
+              />
+            </div>
           </div>
-          
+
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Description
@@ -207,7 +238,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
               className="w-full p-2 border rounded-md"
             ></textarea>
           </div>
-          
+
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Current Images
@@ -235,7 +266,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
               To change images, please use the Add New Vehicle form.
             </p>
           </div>
-          
+
           <div className="flex justify-end gap-2 border-t pt-4">
             <button
               type="button"

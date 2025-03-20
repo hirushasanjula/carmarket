@@ -185,7 +185,7 @@ const VehicleListings = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-center mt-16 items-center mb-7 cursor-pointer">
+      <div className="flex justify-center mt-16 p-2 items-center mb-7 cursor-pointer">
         <div className="shadow-md w-fit border border-black rounded-lg p-6 mb-8">
           <h1 className="text-2xl font-bold text-black">My Vehicle Listings</h1>
           <p className="text-gray-500 mt-1">

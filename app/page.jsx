@@ -24,12 +24,12 @@ export default function Home() {
       {/* Main Content with Sidebar */}
       <main className="flex-1 flex container mx-auto px-4 py-8">
         {/* Sidebar: FilterBar */}
-        <aside className="w-1/4 pr-6 mt-10">
+        <aside className="w-1/4 pr-6 mt-12">
           <FilterBar />
         </aside>
 
         {/* Main Content */}
-        <div className="w-3/4">
+        <div className="w-3/4 mt-4">
           <HeroImage />
           <VehicleSelectionBar />
           <MostViewCardList />
