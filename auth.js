@@ -1,8 +1,8 @@
 import connectToDatabase from "./lib/mongodb";
 import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 
-import GoogleProvider from "next-auth/providers/google";
 import User from "@/models/user";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -42,7 +42,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       },
     }),
- 
+
   ],
   callbacks: {
     // Customize JWT token to include role
@@ -64,7 +64,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-}, {
   pages: {
     signIn: "/sign-in", // Custom sign-in page path
   },
