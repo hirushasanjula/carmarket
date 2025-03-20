@@ -1,7 +1,7 @@
 import connectToDatabase from "./lib/mongodb";
 import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+
 import GoogleProvider from "next-auth/providers/google";
 import User from "@/models/user";
 
