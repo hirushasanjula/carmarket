@@ -222,7 +222,7 @@ const Navbar = () => {
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={toggleMenu}>
+        <div className="md:hidden mt-6 fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={toggleMenu}>
           <div 
             className="fixed right-0 top-0 h-full w-3/4 max-w-sm bg-white shadow-xl transform transition-transform duration-300 ease-in-out overflow-y-auto" 
             onClick={(e) => e.stopPropagation()}

@@ -73,7 +73,7 @@ const FilterBar = () => {
   return (
     <>
       {/* Mobile filter toggle button - Only shown on mobile */}
-      <div className="md:hidden w-full flex justify-between items-center p-4 bg-white sticky top-0 z-10 border-b">
+      <div className="md:hidden mt-16 w-full flex justify-between items-center p-4 bg-white sticky top-0 z-10 border-b">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full transition-all"
@@ -235,7 +235,7 @@ const FilterBar = () => {
         >
           {/* Mobile filter sidebar - Full width from left edge */}
           <div 
-            className={`fixed left-0 top-0 bottom-0 bg-white w-full max-w-xs h-full overflow-y-auto transition-transform duration-300 p-6 shadow-xl ${
+            className={`fixed left-0 top-0 bottom-0 bg-white mt-6 w-full max-w-xs h-full overflow-y-auto transition-transform duration-300 p-6 shadow-xl ${
               isOpen ? "translate-x-0" : "-translate-x-full"
             }`}
             onClick={(e) => e.stopPropagation()}
