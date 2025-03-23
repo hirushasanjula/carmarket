@@ -152,11 +152,11 @@ const Navbar = () => {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link href="/user_details" className="relative">
                     <div
-                      className={`p-1.5 sm:p-2 rounded-full transition-all duration-300 ${
-                        scrolled ? "bg-blue-100 text-blue-700" : "bg-blue-700/30 text-white"
+                      className={`p-1.5 sm:p-2 text-xs sm:text-sm font-semibold rounded-full transition-all duration-300 ${
+                        scrolled ? "bg-blue-100 text-blue-700 border-2 border-blue-500" : "bg-blue-700/30 text-white border-2 border-white"
                       }`}
                     >
-                      <GiCarWheel size={18} className="animate-spin" />
+                      <span className="">Your list</span>
                     </div>
                   </Link>
                   <div className={`hidden sm:flex items-center gap-2 text-sm ${scrolled ? "text-gray-700" : "text-white"}`}>

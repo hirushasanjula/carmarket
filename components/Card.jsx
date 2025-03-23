@@ -97,7 +97,7 @@ const VehicleSelectionBar = () => {
   };
 
   const filteredVehicles = vehicles.filter((vehicle) => vehicle.vehicle_type === selectedCategory);
-  const displayedVehicles = isDesktop ? filteredVehicles.slice(0, 5) : filteredVehicles;
+  const displayedVehicles = isDesktop ? filteredVehicles.slice(0, 5) : filteredVehicles.slice(0, 6);
 
   const formatPrice = (price) => (price ? price.toLocaleString() : "0");
   const getMainImage = (vehicle) =>
@@ -109,7 +109,7 @@ const VehicleSelectionBar = () => {
   };
 
   const VehicleCardSkeleton = () => (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden h-full animate-pulse">
+    <div className="bg-white rounded-xl shadow-md overflow-hidden shrink-0 w-64 h-full animate-pulse">
       <div className="h-40 bg-gray-100"></div>
       <div className="p-3">
         <div className="mb-2">
@@ -179,9 +179,11 @@ const VehicleSelectionBar = () => {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="flex overflow-x-auto pb-6 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:gap-4">
           {[...Array(isDesktop ? 5 : 3)].map((_, index) => (
-            <VehicleCardSkeleton key={index} />
+            <div key={index} className="mr-4 lg:mr-0">
+              <VehicleCardSkeleton />
+            </div>
           ))}
         </div>
       ) : error ? (
@@ -201,9 +203,9 @@ const VehicleSelectionBar = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="flex overflow-x-auto pb-6 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:gap-4 space-x-4 lg:space-x-0">
             {displayedVehicles.map((vehicle) => (
-              <Link key={vehicle._id} href={`/vehicle-detail/${vehicle._id}`} className="block">
+              <Link key={vehicle._id} href={`/vehicle-detail/${vehicle._id}`} className="block shrink-0 w-64 lg:w-auto">
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}

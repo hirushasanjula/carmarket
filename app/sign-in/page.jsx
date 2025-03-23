@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,13 +29,15 @@ const SignIn = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setPending(true); // Show loading state
     const res = await signIn("credentials", {
       redirect: false,
       email,
       password,
     });
+    setPending(false);
     if (res?.error) {
-      setError('Invalid email or password');
+      setError("Invalid email or password");
     } else {
       window.alert("Login successful");
       toast.success("Login successful");
@@ -88,10 +90,18 @@ const SignIn = () => {
                 required
                 className="h-12 px-4 bg-gray-50/50 border-gray-200 focus:ring-2 focus:ring-purple-500"
               />
+              <div className="text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-blue-600 hover:text-blue-500 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
-            <Button 
-              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white font-medium text-lg transition-all duration-300" 
+            <Button
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white font-medium text-lg transition-all duration-300"
               disabled={pending}
             >
               {pending ? "Signing in..." : "Sign in"}
@@ -125,7 +135,7 @@ const SignIn = () => {
           </div>
 
           <p className="text-center text-sm text-gray-600">
-            Don't have an account?{" "}
+            Don’t have an account?{" "}
             <Link
               href="/sign-up"
               className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
