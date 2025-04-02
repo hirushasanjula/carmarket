@@ -5,6 +5,7 @@ import { Phone, Mail, MapPin, Share2, Flag, ArrowLeft, MessageSquare, XCircleIco
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import RecommendedVehicles from "@/components/RecommendedVehicles";
+import VehicleMap from "@/components/VehicleMap";
 
 export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState(null);
@@ -53,7 +54,6 @@ export default function VehicleDetailPage() {
     }
   }, [vehicleId, status]);
 
-  // Fetch existing messages when chat opens
   useEffect(() => {
     if (!isChatOpen || !vehicle?.user?._id || status !== "authenticated") return;
 
@@ -213,6 +213,19 @@ export default function VehicleDetailPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Description</h3>
               <p className="text-gray-600 mb-6">{vehicle.description || "No description provided"}</p>
+              {vehicle.displayLocation && vehicle.displayLocation.latitude !== 0 && (
+                <div className="mt-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Vehicle Location</h3>
+                  <VehicleMap
+                    latitude={vehicle.displayLocation.latitude}
+                    longitude={vehicle.displayLocation.longitude}
+                    title={`${vehicle.year} ${vehicle.model} - ${vehicle.location.city}`}
+                  />
+                  <p className="text-sm text-gray-500 mt-2">
+                    Approximate location based on city for privacy.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -259,7 +272,6 @@ export default function VehicleDetailPage() {
           </div>
         </div>
 
-        {/* Chat Modal */}
         {isChatOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white rounded-lg w-full max-w-md p-6 relative">

@@ -4,7 +4,26 @@ import Vehicle from "@/models/vehicle";
 import User from "@/models/user";
 import { auth } from "@/auth";
 
-// Get vehicle by ID
+async function geocodeCity(region, city) {
+  try {
+    const query = `${city}, ${region}`;
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`
+    );
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return {
+        latitude: parseFloat(data[0].lat),
+        longitude: parseFloat(data[0].lon),
+      };
+    }
+    return { latitude: 0, longitude: 0 }; // Fallback
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    return { latitude: 0, longitude: 0 };
+  }
+}
+
 export async function GET(request, { params }) {
   let connection;
   try {
@@ -14,6 +33,7 @@ export async function GET(request, { params }) {
     if (!vehicle) {
       return NextResponse.json({ error: "Vehicle not found" }, { status: 404 });
     }
+
     const session = await auth();
     if (session && session.user) {
       const user = await User.findOne({ email: session.user.email });
@@ -26,7 +46,16 @@ export async function GET(request, { params }) {
         await vehicle.save();
       }
     }
-    return NextResponse.json(vehicle, { status: 200 });
+
+    // Geocode city for display
+    const cityLocation = await geocodeCity(vehicle.location.region, vehicle.location.city);
+    const vehicleData = vehicle.toObject();
+    vehicleData.displayLocation = {
+      latitude: cityLocation.latitude,
+      longitude: cityLocation.longitude,
+    };
+
+    return NextResponse.json(vehicleData, { status: 200 });
   } catch (error) {
     console.error("Error fetching vehicle:", error);
     return NextResponse.json(

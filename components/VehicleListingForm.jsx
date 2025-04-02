@@ -1,39 +1,38 @@
 "use client";
 
-import { useState, useRef } from 'react';
-import Image from 'next/image';
-import { XCircleIcon } from 'lucide-react';
+import { useState, useRef } from "react";
+import Image from "next/image";
+import { XCircleIcon } from "lucide-react";
 
 export default function VehicleListingForm() {
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    vehicle_type: '',
-    model: '',
-    vehicle_condition: '',
-    year: '',
-    price: '',
-    mileage: '',
-    fuelType: '',
-    transmission: '',
+    vehicle_type: "",
+    model: "",
+    vehicle_condition: "",
+    year: "",
+    price: "",
+    mileage: "",
+    fuelType: "",
+    transmission: "",
     location: {
-      region: '',
-      city: '',
+      region: "",
+      city: "",
+      coordinates: { type: "Point", coordinates: [0, 0] }, // Default coordinates
     },
-    description: '',
+    description: "",
     images: [],
   });
-  
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    if (name === 'year' || name === 'price' || name === 'mileage') {
-      setFormData({ ...formData, [name]: value ? Number(value) : '' });
-    } else if (name === 'region' || name === 'city') {
+    if (name === "year" || name === "price" || name === "mileage") {
+      setFormData({ ...formData, [name]: value ? Number(value) : "" });
+    } else if (name === "region" || name === "city") {
       setFormData({
         ...formData,
         location: { ...formData.location, [name]: value },
@@ -42,20 +41,20 @@ export default function VehicleListingForm() {
       setFormData({ ...formData, [name]: value });
     }
   };
-  
+
   const handleImageUpload = (e) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
       if (formData.images.length + newFiles.length > 5) {
-        setError('Maximum 5 images allowed');
+        setError("Maximum 5 images allowed");
         return;
       }
       setFormData({ ...formData, images: [...formData.images, ...newFiles] });
-      const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
+      const newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file));
       setImagePreviewUrls([...imagePreviewUrls, ...newPreviewUrls]);
     }
   };
-  
+
   const removeImage = (index) => {
     const newImages = [...formData.images];
     newImages.splice(index, 1);
@@ -65,81 +64,117 @@ export default function VehicleListingForm() {
     setFormData({ ...formData, images: newImages });
     setImagePreviewUrls(newPreviews);
   };
-  
+
+  const getLiveLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by your browser."));
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }),
+        (err) => reject(err)
+      );
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
-  
-    if (!formData.model || !formData.year || !formData.price || !formData.vehicle_type || 
-        !formData.vehicle_condition || !formData.location.region || !formData.location.city) {
-      setError('Please fill in all required fields, including region and city');
+    setError("");
+
+    if (
+      !formData.model ||
+      !formData.year ||
+      !formData.price ||
+      !formData.vehicle_type ||
+      !formData.vehicle_condition ||
+      !formData.location.region ||
+      !formData.location.city
+    ) {
+      setError("Please fill in all required fields, including region and city");
       setIsSubmitting(false);
       return;
     }
-  
+
     try {
+      // Capture live location (for internal use)
+      const position = await getLiveLocation();
+      const updatedFormData = {
+        ...formData,
+        location: {
+          ...formData.location,
+          coordinates: {
+            type: "Point",
+            coordinates: [position.longitude, position.latitude],
+          },
+        },
+      };
+
       const submitData = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'images') {
-          formData.images.forEach(file => submitData.append('images', file));
-        } else if (key === 'location') {
+      Object.entries(updatedFormData).forEach(([key, value]) => {
+        if (key === "images") {
+          updatedFormData.images.forEach((file) => submitData.append("images", file));
+        } else if (key === "location") {
           submitData.append(key, JSON.stringify(value));
         } else {
           submitData.append(key, String(value));
         }
       });
-  
-      const response = await fetch('/api/vehicles', {
-        method: 'POST',
+
+      const response = await fetch("/api/vehicles", {
+        method: "POST",
         body: submitData,
       });
-  
+
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || result.details || 'Failed to create vehicle listing'); // Line ~123
+        throw new Error(result.error || result.details || "Failed to create vehicle listing");
       }
       if (!result.success) {
-        throw new Error(result.message || 'Operation did not complete successfully');
+        throw new Error(result.message || "Operation did not complete successfully");
       }
-  
+
       // Reset form
       setFormData({
-        vehicle_type: '',
-        model: '',
-        vehicle_condition: '',
-        year: '',
-        price: '',
-        mileage: '',
-        fuelType: '',
-        transmission: '',
+        vehicle_type: "",
+        model: "",
+        vehicle_condition: "",
+        year: "",
+        price: "",
+        mileage: "",
+        fuelType: "",
+        transmission: "",
         location: {
-          region: '',
-          city: '',
+          region: "",
+          city: "",
+          coordinates: { type: "Point", coordinates: [0, 0] },
         },
-        description: '',
+        description: "",
         images: [],
       });
       setImagePreviewUrls([]);
-      alert('Vehicle listing created successfully! It is pending admin approval.');
+      alert("Vehicle listing created successfully! It is pending admin approval.");
     } catch (err) {
-      console.error('Form submission error:', err);
-      setError(err.message || 'An unexpected error occurred');
+      console.error("Form submission error:", err);
+      setError(err.message || "An unexpected error occurred. Please allow location access if prompted.");
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div className="max-w-4xl mt-12 mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Create Vehicle Listing</h1>
-      
+
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
           {error}
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -177,7 +212,7 @@ export default function VehicleListingForm() {
             />
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label htmlFor="vehicle_condition" className="block text-sm font-medium text-gray-700 mb-1">
@@ -248,7 +283,7 @@ export default function VehicleListingForm() {
             </select>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
@@ -288,9 +323,11 @@ export default function VehicleListingForm() {
             </div>
           </div>
         </div>
-        
+
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Location <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700">
+            Location <span className="text-red-500">*</span>
+          </label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
@@ -323,8 +360,11 @@ export default function VehicleListingForm() {
               />
             </div>
           </div>
+          <p className="text-sm text-gray-500">
+            Your live location will be used internally, but only the city will be shown publicly on the map.
+          </p>
         </div>
-        
+
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
             Description
@@ -339,7 +379,7 @@ export default function VehicleListingForm() {
             placeholder="Describe your vehicle..."
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Upload Images (Max 5)
@@ -386,14 +426,14 @@ export default function VehicleListingForm() {
             className="hidden"
           />
         </div>
-        
+
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={isSubmitting}
             className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors"
           >
-            {isSubmitting ? 'Creating Listing...' : 'Create Listing'}
+            {isSubmitting ? "Creating Listing..." : "Create Listing"}
           </button>
         </div>
       </form>

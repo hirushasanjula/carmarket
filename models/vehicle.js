@@ -13,6 +13,10 @@ const VehicleSchema = new Schema({
   location: {
     region: { type: String, required: true },
     city: { type: String, required: true },
+    coordinates: {
+      type: { type: String, enum: ["Point"], default: "Point" },
+      coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]
+    },
   },
   description: { type: String },
   images: [{ type: String }],
@@ -20,5 +24,7 @@ const VehicleSchema = new Schema({
   views: { type: Number, default: 0 },
   viewers: [{ type: Schema.Types.ObjectId, ref: "User" }],
 }, { timestamps: true });
+
+VehicleSchema.index({ "location.coordinates": "2dsphere" });
 
 module.exports = models?.Vehicle || model("Vehicle", VehicleSchema);

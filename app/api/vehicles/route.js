@@ -11,8 +11,6 @@ export async function POST(request) {
     console.log("Vehicle API route called");
 
     const session = await auth();
-    console.log("Session:", JSON.stringify(session, null, 2));
-
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "You must be logged in to create a listing" },
@@ -20,9 +18,7 @@ export async function POST(request) {
       );
     }
 
-    console.log("Connecting to database...");
     connection = await connectToDatabase();
-    console.log("Database connection established");
 
     const userEmail = session.user.email;
     if (!userEmail) {
@@ -32,10 +28,7 @@ export async function POST(request) {
       );
     }
 
-    console.log("Looking up user with email:", userEmail);
     const user = await User.findOne({ email: userEmail });
-    console.log("User found:", user ? "Yes" : "No", "User ID:", user?._id);
-
     if (!user) {
       return NextResponse.json(
         { error: "User not found in database" },
@@ -44,12 +37,9 @@ export async function POST(request) {
     }
 
     const formData = await request.formData();
-    console.log("Form data keys:", [...formData.keys()]);
-
     let location = {};
     try {
       const locationString = formData.get("location");
-      console.log("Location string:", locationString);
       if (locationString) {
         location = JSON.parse(locationString);
       }
@@ -69,16 +59,12 @@ export async function POST(request) {
     }
 
     const imageFiles = formData.getAll("images");
-    console.log("Number of image files:", imageFiles.length);
     const imageUrls = [];
-
     if (imageFiles && imageFiles.length > 0) {
       for (const imageFile of imageFiles) {
         if (imageFile instanceof Blob) {
           try {
-            console.log("Uploading image to Cloudinary...");
             const result = await uploadToCloudinary(imageFile);
-            console.log("Cloudinary result:", result ? "Success" : "Failed");
             if (result && result.secure_url) {
               imageUrls.push(result.secure_url);
             }
@@ -88,8 +74,6 @@ export async function POST(request) {
         }
       }
     }
-
-    console.log("Image URLs:", imageUrls);
 
     const vehicleData = {
       user: user._id,
@@ -104,21 +88,17 @@ export async function POST(request) {
       location: {
         region: location.region,
         city: location.city,
+        coordinates: {
+          type: "Point",
+          coordinates: location.coordinates?.coordinates || [0, 0],
+        },
       },
       description: formData.get("description") || undefined,
       images: imageUrls.length > 0 ? imageUrls : [],
       status: "Pending",
     };
 
-    console.log("Vehicle data to save:", JSON.stringify(vehicleData, null, 2));
-
-    console.log("Creating vehicle document...");
     const newVehicle = await Vehicle.create(vehicleData);
-    console.log("Vehicle created:", JSON.stringify(newVehicle, null, 2));
-
-    console.log("Verifying vehicle was saved...");
-    const savedVehicle = await Vehicle.findById(newVehicle._id);
-    console.log("Saved vehicle:", JSON.stringify(savedVehicle, null, 2));
 
     return NextResponse.json(
       {
@@ -130,7 +110,6 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error("Error creating vehicle listing:", error);
-    console.error("Error stack:", error.stack);
     if (error.name === "ValidationError") {
       return NextResponse.json(
         {
@@ -156,13 +135,7 @@ export async function POST(request) {
     );
   } finally {
     if (connection && typeof connection.close === "function") {
-      try {
-        console.log("Closing database connection...");
-        await connection.close();
-        console.log("Database connection closed");
-      } catch (closeError) {
-        console.error("Error closing database connection:", closeError);
-      }
+      await connection.close();
     }
   }
 }
