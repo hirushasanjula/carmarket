@@ -8,20 +8,11 @@ import MostViewCardList from "@/components/MostViewd";
 import FilterBar from "@/components/FilterBar";
 
 export default function Home() {
-  const [scrolled, setScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-
-    handleResize();
-    window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleResize);
-
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -45,12 +36,7 @@ export default function Home() {
     };
 
     fetchData();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []); // No dependencies since search is removed
+  }, []); // No cleanup needed without event listeners
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -73,7 +59,6 @@ export default function Home() {
             <div className="flex justify-center">
               <HeroImageSlider />
             </div>
-
 
             <VehicleSelectionBar />
             <MostViewCardList />
