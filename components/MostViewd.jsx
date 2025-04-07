@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-
 const MostViewedVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
   const [savedVehicles, setSavedVehicles] = useState([]);
@@ -102,104 +101,125 @@ const MostViewedVehicles = () => {
   };
 
   const VehicleCardSkeleton = () => (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden h-full animate-pulse">
-      <div className="h-40 bg-gray-100"></div>
-      <div className="p-3">
-        <div className="mb-2">
-          <div className="h-5 bg-gray-100 rounded w-3/4 mb-1"></div>
-          <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden h-full animate-pulse">
+      <div className="h-44 bg-gray-100"></div>
+      <div className="p-4">
+        <div className="mb-3">
+          <div className="h-5 bg-gray-100 rounded-full w-3/4 mb-2"></div>
+          <div className="h-4 bg-gray-100 rounded-full w-1/3"></div>
         </div>
-        <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3">
-          <div className="h-3 bg-gray-100 rounded"></div>
-          <div className="h-3 bg-gray-100 rounded"></div>
-          <div className="h-3 bg-gray-100 rounded"></div>
-          <div className="h-3 bg-gray-100 rounded"></div>
+        <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-4">
+          <div className="h-3 bg-gray-100 rounded-full"></div>
+          <div className="h-3 bg-gray-100 rounded-full"></div>
+          <div className="h-3 bg-gray-100 rounded-full"></div>
+          <div className="h-3 bg-gray-100 rounded-full"></div>
         </div>
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-4">
           <div className="w-1/2">
-            <div className="h-3 bg-gray-100 rounded w-1/2 mb-1"></div>
-            <div className="h-5 bg-gray-100 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-100 rounded-full w-1/2 mb-1"></div>
+            <div className="h-6 bg-gray-100 rounded-full w-3/4"></div>
           </div>
           <div className="w-1/3">
-            <div className="h-3 bg-gray-100 rounded w-full mb-1"></div>
-            <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-100 rounded-full w-full mb-1"></div>
+            <div className="h-3 bg-gray-100 rounded-full w-3/4"></div>
           </div>
         </div>
-        <div className="w-full h-8 bg-gray-100 rounded-lg"></div>
+        <div className="w-full h-10 bg-gray-100 rounded-xl"></div>
       </div>
     </div>
   );
 
   const HeaderSkeleton = () => (
-    <div className="text-center mb-8 animate-pulse">
-      <div className="h-7 bg-gray-100 rounded w-56 mx-auto mb-2"></div>
-      <div className="h-4 bg-gray-100 rounded w-64 mx-auto"></div>
+    <div className="text-center mb-10 animate-pulse">
+      <div className="h-8 bg-gray-100 rounded-full w-64 mx-auto mb-3"></div>
+      <div className="h-4 bg-gray-100 rounded-full w-72 mx-auto"></div>
     </div>
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-gradient-to-b from-gray-50 to-white">
+    <div className="container mx-auto px-6 py-12 bg-gradient-to-br from-blue-50 via-white to-gray-50">
       {loading ? (
         <HeaderSkeleton />
       ) : (
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Most Viewed Vehicles</h1>
-          <p className="text-sm text-gray-500 mt-2">Check out the top trending rides!</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-10"
+        >
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700">
+            Most Viewed Vehicles
+          </h1>
+          <p className="text-sm text-gray-500 mt-3 max-w-lg mx-auto">
+            Check out the top trending rides our users are exploring right now!
+          </p>
+        </motion.div>
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, index) => (
             <VehicleCardSkeleton key={index} />
           ))}
         </div>
       ) : error ? (
-        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mx-auto max-w-lg">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-red-50 border-l-4 border-red-500 text-red-700 p-6 rounded-xl mx-auto max-w-lg"
+        >
           <p className="font-bold">Unable to load vehicles</p>
           <p>{error}</p>
-        </div>
+        </motion.div>
       ) : vehicles.length === 0 ? (
-        <div className="text-center p-8 bg-white rounded-xl shadow-md mx-auto max-w-md">
-          <div className="text-gray-400 mb-3">
-            <Car size={36} className="mx-auto" />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center p-10 bg-white rounded-2xl shadow-xl mx-auto max-w-md"
+        >
+          <div className="text-gray-400 mb-4">
+            <Car size={48} className="mx-auto" />
           </div>
-          <p className="text-lg font-semibold text-gray-800">No vehicles available</p>
-          <p className="mt-2 text-sm text-gray-500">Check back later for trending vehicles.</p>
-        </div>
+          <p className="text-xl font-semibold text-gray-800">No vehicles available</p>
+          <p className="mt-3 text-sm text-gray-500">Check back later for trending vehicles.</p>
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {vehicles.map((vehicle) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {vehicles.map((vehicle, index) => (
             <Link key={vehicle._id} href={`/vehicle-detail/${vehicle._id}`} className="block">
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg relative h-full"
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl relative h-full group"
                 onMouseEnter={() => setIsHovering(vehicle._id)}
                 onMouseLeave={() => setIsHovering(null)}
               >
                 {isNewListing(vehicle.createdAt) && (
-                  <div className="absolute top-1 left-2 z-10">
-                    <span className="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
                       New
                     </span>
                   </div>
                 )}
                 <button
                   onClick={(e) => handleBookmark(vehicle._id, e)}
-                  className="absolute top-1 right-2 z-10 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-all hover:bg-white"
+                  className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-md transition-all hover:bg-white hover:scale-110"
                 >
                   <Heart
-                    size={16}
-                    className={`${savedVehicles.includes(vehicle._id) ? "fill-red-500 text-red-500" : "text-gray-500"}`}
+                    size={18}
+                    className={`transition-colors ${
+                      savedVehicles.includes(vehicle._id) 
+                        ? "fill-red-500 text-red-500" 
+                        : "text-gray-400 group-hover:text-red-400"
+                    }`}
                   />
                 </button>
-                <div className="h-40 overflow-hidden">
+                <div className="h-44 overflow-hidden bg-gray-100">
                   <img
                     src={getMainImage(vehicle)}
                     alt={vehicle.model}
-                    className={`w-full object-scale-down transition-transform duration-300 ease-in-out ${
+                    className={`w-full h-full object-cover object-center transition-transform duration-500 ease-out ${
                       isHovering === vehicle._id ? "scale-110" : "scale-100"
                     }`}
                     onError={(e) => {
@@ -207,19 +227,19 @@ const MostViewedVehicles = () => {
                     }}
                   />
                 </div>
-                <div className="p-3">
-                  <div className="mb-2">
-                    <h2 className="text-base font-bold text-gray-800 leading-tight">
+                <div className="p-4">
+                  <div className="mb-3">
+                    <h2 className="text-lg font-bold text-gray-800 leading-tight">
                       {vehicle.year} {vehicle.model}
                     </h2>
-                    <div className="mt-1 flex items-center">
+                    <div className="mt-2 flex items-center">
                       <span
-                        className={`inline-block px-1.5 py-0.5 rounded-md text-xs font-medium ${
+                        className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${
                           vehicle.vehicle_condition === "brand-new"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-green-100 text-green-700"
                             : vehicle.vehicle_condition === "unregister"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-blue-100 text-blue-800"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-blue-100 text-blue-700"
                         }`}
                       >
                         {vehicle.vehicle_condition === "brand-new"
@@ -230,23 +250,23 @@ const MostViewedVehicles = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3">
+                  <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-4">
                     <div className="flex items-center text-xs text-gray-600">
-                      <Calendar size={12} className="mr-1 text-blue-500" />
+                      <Calendar size={14} className="mr-1.5 text-blue-500" />
                       <span>{vehicle.year}</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-600">
-                      <Gauge size={12} className="mr-1 text-blue-500" />
+                      <Gauge size={14} className="mr-1.5 text-blue-500" />
                       <span>{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : "N/A"}</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-600">
-                      <Fuel size={12} className="mr-1 text-blue-500" />
+                      <Fuel size={14} className="mr-1.5 text-blue-500" />
                       <span>{vehicle.fuelType || "N/A"}</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-600">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3 mr-1 text-blue-500"
+                        className="h-3.5 w-3.5 mr-1.5 text-blue-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -261,21 +281,23 @@ const MostViewedVehicles = () => {
                       <span>{vehicle.transmission || "N/A"}</span>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center mb-3">
+                  <div className="flex justify-between items-center mb-4">
                     <div>
-                      <span className="text-xs text-gray-500">Price</span>
-                      <div className="text-lg font-bold text-blue-600">${formatPrice(vehicle.price)}</div>
+                      <span className="text-xs font-medium text-gray-500">Price</span>
+                      <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700">
+                        ${formatPrice(vehicle.price)}
+                      </div>
                     </div>
                     {vehicle.user && (
                       <div className="text-right">
-                        <span className="text-xs text-gray-500 block">by</span>
-                        <div className="text-xs font-medium">{vehicle.user.name}</div>
+                        <span className="text-xs text-gray-500 block">Listed by</span>
+                        <div className="text-xs font-medium text-gray-700">{vehicle.user.name}</div>
                       </div>
                     )}
                   </div>
-                  <div className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg py-1.5 font-medium text-xs transition-all hover:shadow-sm hover:from-blue-700 hover:to-blue-800">
+                  <div className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl py-2.5 font-medium text-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-200 hover:from-blue-700 hover:to-indigo-800 transform hover:-translate-y-0.5">
                     <span>View Details</span>
-                    <ArrowRight size={12} className="ml-1.5" />
+                    <ArrowRight size={14} className="ml-2" />
                   </div>
                 </div>
               </motion.div>

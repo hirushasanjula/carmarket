@@ -109,41 +109,41 @@ const VehicleSelectionBar = () => {
   };
 
   const VehicleCardSkeleton = () => (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden shrink-0 w-64 h-full animate-pulse">
+    <div className="bg-white rounded-2xl shadow-md overflow-hidden shrink-0 w-64 h-full animate-pulse">
       <div className="h-40 bg-gray-100"></div>
-      <div className="p-3">
-        <div className="mb-2">
-          <div className="h-5 bg-gray-100 rounded w-3/4 mb-1"></div>
-          <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+      <div className="p-4">
+        <div className="mb-3">
+          <div className="h-5 bg-gray-100 rounded-full w-3/4 mb-1"></div>
+          <div className="h-4 bg-gray-100 rounded-full w-1/3"></div>
         </div>
-        <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3">
-          <div className="h-3 bg-gray-100 rounded"></div>
-          <div className="h-3 bg-gray-100 rounded"></div>
-          <div className="h-3 bg-gray-100 rounded"></div>
-          <div className="h-3 bg-gray-100 rounded"></div>
+        <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-3">
+          <div className="h-3 bg-gray-100 rounded-full"></div>
+          <div className="h-3 bg-gray-100 rounded-full"></div>
+          <div className="h-3 bg-gray-100 rounded-full"></div>
+          <div className="h-3 bg-gray-100 rounded-full"></div>
         </div>
         <div className="flex justify-between items-center mb-3">
           <div className="w-1/2">
-            <div className="h-3 bg-gray-100 rounded w-1/2 mb-1"></div>
-            <div className="h-5 bg-gray-100 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-100 rounded-full w-1/2 mb-1"></div>
+            <div className="h-5 bg-gray-100 rounded-full w-3/4"></div>
           </div>
           <div className="w-1/3">
-            <div className="h-3 bg-gray-100 rounded w-full mb-1"></div>
-            <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-100 rounded-full w-full mb-1"></div>
+            <div className="h-3 bg-gray-100 rounded-full w-3/4"></div>
           </div>
         </div>
-        <div className="w-full h-8 bg-gray-100 rounded-lg"></div>
+        <div className="w-full h-8 bg-gray-100 rounded-full"></div>
       </div>
     </div>
   );
 
   const CategorySkeleton = () => (
     <div className="w-full max-w-xl mx-auto mb-8 animate-pulse">
-      <div className="h-7 bg-gray-100 rounded w-56 mx-auto mb-4"></div>
-      <div className="bg-white rounded-xl shadow-md p-1.5">
-        <div className="grid grid-cols-4 gap-1">
+      <div className="h-7 bg-gray-100 rounded-full w-56 mx-auto mb-4"></div>
+      <div className="bg-white rounded-2xl shadow-md p-2">
+        <div className="grid grid-cols-4 gap-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-10 bg-gray-100 rounded-lg"></div>
+            <div key={i} className="h-10 bg-gray-100 rounded-full"></div>
           ))}
         </div>
       </div>
@@ -151,25 +151,29 @@ const VehicleSelectionBar = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-gradient-to-b from-gray-50 to-white">
+    <div className="container mx-auto px-4 py-12">
       {loading ? (
         <CategorySkeleton />
       ) : (
-        <div className="w-full max-w-xl mx-auto mb-8">
-          <h1 className="text-2xl font-bold text-center mb-4 text-gray-800">Find Your Perfect Ride</h1>
-          <div className="bg-white rounded-xl shadow-md p-1.5">
-            <div className="grid grid-cols-4 gap-1">
+        <div className="w-full max-w-xl mx-auto mb-10">
+          <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+              Find Your Perfect Ride
+            </span>
+          </h1>
+          <div className="bg-white rounded-2xl shadow-lg p-2 backdrop-blur-sm bg-white/80">
+            <div className="grid grid-cols-4 gap-2">
               {vehicleCategories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`flex items-center justify-center p-2 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center justify-center p-3 rounded-xl transition-all duration-300 ${
                     selectedCategory === category.id
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                      ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100 hover:scale-105"
                   }`}
                 >
-                  <div className="mr-1.5">{category.icon}</div>
+                  <div className="mr-2">{category.icon}</div>
                   <span className="text-xs font-medium">{category.name}</span>
                 </button>
               ))}
@@ -179,7 +183,7 @@ const VehicleSelectionBar = () => {
       )}
 
       {loading ? (
-        <div className="flex overflow-x-auto pb-6 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:gap-4">
+        <div className="flex overflow-x-auto pb-6  lg:cols-4  lg:gap-6 space-x-6 lg:space-x-0">
           {[...Array(isDesktop ? 5 : 3)].map((_, index) => (
             <div key={index} className="mr-4 lg:mr-0">
               <VehicleCardSkeleton />
@@ -187,54 +191,57 @@ const VehicleSelectionBar = () => {
           ))}
         </div>
       ) : error ? (
-        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mx-auto max-w-lg">
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl mx-auto max-w-lg">
           <p className="font-bold">Unable to load vehicles</p>
           <p>{error}</p>
         </div>
       ) : filteredVehicles.length === 0 ? (
-        <div className="text-center p-8 bg-white rounded-xl shadow-md mx-auto max-w-md">
-          <div className="text-gray-400 mb-3">
-            <Truck size={36} className="mx-auto" />
+        <div className="text-center p-10 bg-white rounded-2xl shadow-lg mx-auto max-w-md bg-opacity-80 backdrop-blur-sm">
+          <div className="text-gray-400 mb-4">
+            <Truck size={48} className="mx-auto" />
           </div>
-          <p className="text-lg font-semibold text-gray-800">
+          <p className="text-xl font-semibold text-gray-800">
             No {selectedCategory} listings available
           </p>
-          <p className="mt-2 text-sm text-gray-500">Try selecting a different category or check back later.</p>
+          <p className="mt-3 text-sm text-gray-500">Try selecting a different category or check back later.</p>
         </div>
       ) : (
         <>
-          <div className="flex overflow-x-auto pb-6 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:gap-4 space-x-4 lg:space-x-0">
-            {displayedVehicles.map((vehicle) => (
+          <div className="flex overflow-x-auto pb-6  lg:cols-4  lg:gap-6 space-x-6 lg:space-x-0">
+            {displayedVehicles.map((vehicle, idx) => (
               <Link key={vehicle._id} href={`/vehicle-detail/${vehicle._id}`} className="block shrink-0 w-64 lg:w-auto">
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg relative h-full"
+                  transition={{ duration: 0.3, delay: idx * 0.05 }}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl relative h-full group hover:translate-y-1"
                   onMouseEnter={() => setIsHovering(vehicle._id)}
                   onMouseLeave={() => setIsHovering(null)}
                 >
                   {isNewListing(vehicle.createdAt) && (
-                    <div className="absolute top-1 left-2 z-10">
-                      <span className="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm">
                         New
                       </span>
                     </div>
                   )}
                   <button
                     onClick={(e) => handleBookmark(vehicle._id, e)}
-                    className="absolute top-1 right-2 z-10 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-all hover:bg-white"
+                    className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-md transition-all hover:bg-white hover:scale-110"
                   >
                     <Heart
                       size={16}
-                      className={`${savedVehicles.includes(vehicle._id) ? "fill-red-500 text-red-500" : "text-gray-500"}`}
+                      className={`${
+                        savedVehicles.includes(vehicle._id) ? "fill-red-500 text-red-500" : "text-gray-500"
+                      } transition-all duration-300`}
                     />
                   </button>
-                  <div className="h-40 overflow-hidden">
+                  <div className="h-48 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-0"></div>
                     <img
                       src={getMainImage(vehicle)}
                       alt={vehicle.model}
-                      className={`w-full object-scale-down transition-transform duration-300 ease-in-out ${
+                      className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
                         isHovering === vehicle._id ? "scale-110" : "scale-100"
                       }`}
                       onError={(e) => {
@@ -242,19 +249,19 @@ const VehicleSelectionBar = () => {
                       }}
                     />
                   </div>
-                  <div className="p-3">
-                    <div className="mb-2">
-                      <h2 className="text-base font-bold text-gray-800 leading-tight">
+                  <div className="p-4">
+                    <div className="mb-3">
+                      <h2 className="text-lg font-bold text-gray-800 leading-tight">
                         {vehicle.year} {vehicle.model}
                       </h2>
-                      <div className="mt-1 flex items-center">
+                      <div className="mt-2 flex items-center">
                         <span
-                          className={`inline-block px-1.5 py-0.5 rounded-md text-xs font-medium ${
+                          className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
                             vehicle.vehicle_condition === "brand-new"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800"
                               : vehicle.vehicle_condition === "unregister"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-blue-100 text-blue-800"
+                              ? "bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800"
+                              : "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800"
                           }`}
                         >
                           {vehicle.vehicle_condition === "brand-new"
@@ -265,23 +272,23 @@ const VehicleSelectionBar = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 mb-3 text-xs text-gray-600">
+                    <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-4 text-xs text-gray-600">
                       <div className="flex items-center">
-                        <Calendar size={12} className="mr-1 text-blue-500" />
+                        <Calendar size={14} className="mr-2 text-indigo-500" />
                         <span>{vehicle.year}</span>
                       </div>
                       <div className="flex items-center">
-                        <Gauge size={12} className="mr-1 text-blue-500" />
+                        <Gauge size={14} className="mr-2 text-indigo-500" />
                         <span>{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : "N/A"}</span>
                       </div>
                       <div className="flex items-center">
-                        <Fuel size={12} className="mr-1 text-blue-500" />
+                        <Fuel size={14} className="mr-2 text-indigo-500" />
                         <span>{vehicle.fuelType || "N/A"}</span>
                       </div>
                       <div className="flex items-center">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="h-3 w-3 mr-1 text-blue-500"
+                          className="h-4 w-4 mr-2 text-indigo-500"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -296,18 +303,20 @@ const VehicleSelectionBar = () => {
                         <span>{vehicle.transmission || "N/A"}</span>
                       </div>
                       <div className="flex items-center">
-                        <MapPin size={12} className="mr-1 text-blue-500" />
+                        <MapPin size={14} className="mr-2 text-indigo-500" />
                         <span>{vehicle.location?.region || "N/A"}</span>
                       </div>
                       <div className="flex items-center">
-                        <MapPin size={12} className="mr-1 text-blue-500" />
+                        <MapPin size={14} className="mr-2 text-indigo-500" />
                         <span>{vehicle.location?.city || "N/A"}</span>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center mb-3">
+                    <div className="flex justify-between items-center mb-4">
                       <div>
                         <span className="text-xs text-gray-500">Price</span>
-                        <div className="text-lg font-bold text-blue-600">Rs. {formatPrice(vehicle.price)}</div>
+                        <div className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                          Rs. {formatPrice(vehicle.price)}
+                        </div>
                       </div>
                       {vehicle.user && (
                         <div className="text-right">
@@ -316,9 +325,9 @@ const VehicleSelectionBar = () => {
                         </div>
                       )}
                     </div>
-                    <div className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg py-1.5 font-medium text-xs transition-all hover:shadow-sm hover:from-blue-700 hover:to-blue-800">
+                    <div className="w-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl py-2.5 font-medium text-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-200 group-hover:from-blue-600 group-hover:to-indigo-700">
                       <span>View Details</span>
-                      <ArrowRight size={12} className="ml-1.5" />
+                      <ArrowRight size={14} className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
                     </div>
                   </div>
                 </motion.div>
@@ -327,9 +336,9 @@ const VehicleSelectionBar = () => {
           </div>
 
           {filteredVehicles.length > displayedVehicles.length && (
-            <div className="mt-6 text-center">
+            <div className="mt-10 text-center">
               <Link href={`/vehicles/${selectedCategory}`}>
-                <button className="bg-blue-600 text-white font-medium text-sm px-6 py-2 rounded-lg hover:bg-blue-700 transition-all">
+                <button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium text-sm px-8 py-3 rounded-xl hover:shadow-lg hover:shadow-blue-200 transition-all duration-300 hover:translate-y-1">
                   View All{" "}
                   {selectedCategory === "car"
                     ? "Cars"
@@ -338,6 +347,7 @@ const VehicleSelectionBar = () => {
                     : selectedCategory === "jeep/suv"
                     ? "SUVs"
                     : "Double Cabs"}
+                  <ArrowRight size={14} className="ml-2 inline-block" />
                 </button>
               </Link>
             </div>
