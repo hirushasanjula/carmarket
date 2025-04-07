@@ -23,6 +23,7 @@ const VehicleSchema = new Schema({
   status: { type: String, enum: ["Pending", "Active", "Rejected"], default: "Pending" },
   views: { type: Number, default: 0 },
   viewers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  contactPhone: { type: String },
 }, { timestamps: true });
 
 VehicleSchema.index({ "location.coordinates": "2dsphere" });

@@ -96,6 +96,7 @@ export async function POST(request) {
       description: formData.get("description") || undefined,
       images: imageUrls.length > 0 ? imageUrls : [],
       status: "Pending",
+      contactPhone: formData.get("contactPhone") || undefined,
     };
 
     const newVehicle = await Vehicle.create(vehicleData);

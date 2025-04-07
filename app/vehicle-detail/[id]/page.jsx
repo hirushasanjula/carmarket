@@ -128,7 +128,7 @@ export default function VehicleDetailPage() {
   const getVehicleSpecs = () => {
     if (!vehicle) return {};
     return {
-      condition: vehicle.vehicle_condition === "brand-new" ? "Brand New" : 
+      condition: vehicle.vehicle_condition === "brand-new" ? "Brand New" :
                  vehicle.vehicle_condition === "unregister" ? "Unregistered" : "Used",
       year: vehicle.year,
       mileage: vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : "N/A",
@@ -213,16 +213,16 @@ export default function VehicleDetailPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Description</h3>
               <p className="text-gray-600 mb-6">{vehicle.description || "No description provided"}</p>
-              {vehicle.displayLocation && vehicle.displayLocation.latitude !== 0 && (
+              {vehicle.location && vehicle.location.coordinates.coordinates[0] !== 0 && (
                 <div className="mt-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">Vehicle Location</h3>
                   <VehicleMap
-                    latitude={vehicle.displayLocation.latitude}
-                    longitude={vehicle.displayLocation.longitude}
+                    latitude={vehicle.location.coordinates.coordinates[1]}
+                    longitude={vehicle.location.coordinates.coordinates[0]}
                     title={`${vehicle.year} ${vehicle.model} - ${vehicle.location.city}`}
                   />
                   <p className="text-sm text-gray-500 mt-2">
-                    Approximate location based on city for privacy.
+                    Approximate location based on seller-provided coordinates.
                   </p>
                 </div>
               )}
@@ -236,15 +236,42 @@ export default function VehicleDetailPage() {
                 <p className="text-3xl font-bold text-blue-600 mt-2">Rs. {formatPrice(vehicle.price)}</p>
               </div>
               {vehicle.location && (
-                <div className="flex items-center text-gray-600 mb-6">
+                <div className="flex items-center text-gray-600 mb-4">
                   <MapPin size={20} className="mr-2" />
                   <span>{vehicle.location.region}, {vehicle.location.city}</span>
                 </div>
               )}
+              {/* Updated Contact Details */}
+              <div className="space-y-4 mb-6">
+                {vehicle.contactPhone && (
+                  <div className="flex items-center text-gray-600">
+                    <Phone size={20} className="mr-2" />
+                    <a href={`tel:${vehicle.contactPhone}`} className="hover:underline">
+                      {vehicle.contactPhone}
+                    </a>
+                  </div>
+                )}
+                {vehicle.contactEmail && (
+                  <div className="flex items-center text-gray-600">
+                    <Mail size={20} className="mr-2" />
+                    <a href={`mailto:${vehicle.contactEmail}`} className="hover:underline">
+                      {vehicle.contactEmail}
+                    </a>
+                  </div>
+                )}
+                {!vehicle.contactPhone && !vehicle.contactEmail && (
+                  <p className="text-gray-500">No contact details provided by seller.</p>
+                )}
+              </div>
               <div className="space-y-3">
-                <button className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                  <Phone size={20} /> <span>{vehicle.user?.mobile || "Contact seller"}</span>
-                </button>
+                {vehicle.contactPhone && (
+                  <a
+                    href={`tel:${vehicle.contactPhone}`}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Phone size={20} /> <span>Call Seller</span>
+                  </a>
+                )}
                 {vehicle.user && vehicle.user.email && (
                   <button
                     onClick={() => status === "authenticated" ? setIsChatOpen(true) : alert("Please log in to message the seller")}

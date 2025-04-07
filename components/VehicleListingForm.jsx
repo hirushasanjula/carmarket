@@ -19,10 +19,12 @@ export default function VehicleListingForm() {
     location: {
       region: "",
       city: "",
-      coordinates: { type: "Point", coordinates: [0, 0] }, // Default coordinates
+      coordinates: { type: "Point", coordinates: [0, 0] },
     },
     description: "",
     images: [],
+    contactPhone: "", // New field
+    contactEmail: "", // New field
   });
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,15 +94,15 @@ export default function VehicleListingForm() {
       !formData.vehicle_type ||
       !formData.vehicle_condition ||
       !formData.location.region ||
-      !formData.location.city
+      !formData.location.city ||
+      !formData.contactPhone // Require phone number
     ) {
-      setError("Please fill in all required fields, including region and city");
+      setError("Please fill in all required fields, including contact phone number");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      // Capture live location (for internal use)
       const position = await getLiveLocation();
       const updatedFormData = {
         ...formData,
@@ -137,7 +139,6 @@ export default function VehicleListingForm() {
         throw new Error(result.message || "Operation did not complete successfully");
       }
 
-      // Reset form
       setFormData({
         vehicle_type: "",
         model: "",
@@ -154,6 +155,8 @@ export default function VehicleListingForm() {
         },
         description: "",
         images: [],
+        contactPhone: "",
+        contactEmail: "",
       });
       setImagePreviewUrls([]);
       alert("Vehicle listing created successfully! It is pending admin approval.");
@@ -362,6 +365,47 @@ export default function VehicleListingForm() {
           </div>
           <p className="text-sm text-gray-500">
             Your live location will be used internally, but only the city will be shown publicly on the map.
+          </p>
+        </div>
+
+        {/* New Contact Details Section */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Contact Details <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                id="contactPhone"
+                name="contactPhone"
+                value={formData.contactPhone}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="e.g. +94 123 456 789"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                Email (Optional)
+              </label>
+              <input
+                type="email"
+                id="contactEmail"
+                name="contactEmail"
+                value={formData.contactEmail}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="e.g. seller@example.com"
+              />
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">
+            Your phone number will be visible to buyers. Email is optional and can be used for additional contact.
           </p>
         </div>
 
