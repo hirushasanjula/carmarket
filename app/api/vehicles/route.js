@@ -155,6 +155,8 @@ export async function GET(request) {
     const fuelType = url.searchParams.get("fuelType")?.trim();
     const minPrice = url.searchParams.get("minPrice")?.trim();
     const maxPrice = url.searchParams.get("maxPrice")?.trim();
+    const region = url.searchParams.get("region")?.trim(); // New param
+    const city = url.searchParams.get("city")?.trim();
 
     connection = await connectToDatabase();
 
@@ -210,6 +212,13 @@ export async function GET(request) {
         const max = Number(maxPrice);
         if (!isNaN(max)) query.price.$lte = max;
       }
+    }
+
+    if (region) {
+      query["location.region"] = { $regex: region, $options: "i" };
+    }
+    if (city) {
+      query["location.city"] = { $regex: city, $options: "i" };
     }
 
     const vehicles = await Vehicle.find(query)

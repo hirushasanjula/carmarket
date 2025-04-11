@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Filter, X, ChevronDown } from "lucide-react";
+import { Filter, X } from "lucide-react";
 
 const FilterBar = () => {
   const [filters, setFilters] = useState({
@@ -12,26 +12,21 @@ const FilterBar = () => {
     fuelType: "",
     minPrice: "",
     maxPrice: "",
+    region: "", // Still a string, now for text input
+    city: "",   // Still a string, now for text input
   });
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Check if we're on client-side
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const handleResize = () => {
         setIsMobile(window.innerWidth < 768);
       };
-      
-      // Set initial value
       handleResize();
-      
-      // Add event listener
-      window.addEventListener('resize', handleResize);
-      
-      // Cleanup
-      return () => window.removeEventListener('resize', handleResize);
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
     }
   }, []);
 
@@ -48,6 +43,8 @@ const FilterBar = () => {
       fuelType: "",
       minPrice: "",
       maxPrice: "",
+      region: "",
+      city: "",
     });
   };
 
@@ -59,6 +56,8 @@ const FilterBar = () => {
       ...(filters.fuelType && { fuelType: filters.fuelType }),
       ...(filters.minPrice && { minPrice: filters.minPrice }),
       ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
+      ...(filters.region && { region: filters.region }), // Pass typed region
+      ...(filters.city && { city: filters.city }),       // Pass typed city
     }).toString();
 
     router.push(`/filter-results?${queryParams}`);
@@ -67,12 +66,11 @@ const FilterBar = () => {
     }
   };
 
-  // Calculate active filters count
-  const activeFiltersCount = Object.values(filters).filter(value => value !== "").length;
+  const activeFiltersCount = Object.values(filters).filter((value) => value !== "").length;
 
   return (
     <>
-      {/* Mobile filter toggle button - Only shown on mobile */}
+      {/* Mobile filter toggle button */}
       <div className="md:hidden mt-16 w-full flex justify-between items-center p-4 bg-white sticky top-0 z-10 border-b">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -88,7 +86,7 @@ const FilterBar = () => {
         </button>
       </div>
 
-      {/* Desktop filter panel - Only shown on desktop */}
+      {/* Desktop filter panel */}
       <div className="hidden md:block">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-6">
@@ -99,26 +97,20 @@ const FilterBar = () => {
             {/* Vehicle Type */}
             <div className="group">
               <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-              <div className="relative">
-                <select
-                  name="vehicle_type"
-                  value={filters.vehicle_type}
-                  onChange={handleFilterChange}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 transition-all"
-                >
-                  <option value="">All Types</option>
-                  <option value="SUV">SUV</option>
-                  <option value="Sedan">Sedan</option>
-                  <option value="Truck">Truck</option>
-                  <option value="Hatchback">Hatchback</option>
-                  <option value="Coupe">Coupe</option>
-                  <option value="Van">Van</option>
-                </select>
-                <ChevronDown size={18} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
-              </div>
+              <select
+                name="vehicle_type"
+                value={filters.vehicle_type}
+                onChange={handleFilterChange}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              >
+                <option value="">All Types</option>
+                <option value="car">Car</option>
+                <option value="van">Van</option>
+                <option value="jeep/suv">Jeep/SUV</option>
+                <option value="double-cab">Double Cab</option>
+              </select>
             </div>
 
-            {/* The rest of filter fields - same for desktop */}
             {/* Model */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
@@ -127,7 +119,7 @@ const FilterBar = () => {
                 name="model"
                 value={filters.model}
                 onChange={handleFilterChange}
-                placeholder="e.g., Camry"
+                placeholder="e.g., Corolla"
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
@@ -150,22 +142,17 @@ const FilterBar = () => {
             {/* Fuel Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
-              <div className="relative">
-                <select
-                  name="fuelType"
-                  value={filters.fuelType}
-                  onChange={handleFilterChange}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 transition-all"
-                >
-                  <option value="">All Fuel Types</option>
-                  <option value="Petrol">Petrol</option>
-                  <option value="Diesel">Diesel</option>
-                  <option value="Electric">Electric</option>
-                  <option value="Hybrid">Hybrid</option>
-                  <option value="Plug-in Hybrid">Plug-in Hybrid</option>
-                </select>
-                <ChevronDown size={18} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
-              </div>
+              <select
+                name="fuelType"
+                value={filters.fuelType}
+                onChange={handleFilterChange}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              >
+                <option value="">All Fuel Types</option>
+                <option value="Petrol">Petrol</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Electric">Electric</option>
+              </select>
             </div>
 
             {/* Price Range */}
@@ -173,7 +160,7 @@ const FilterBar = () => {
               <label className="block text-sm font-medium text-gray-700 mb-3">Price Range</label>
               <div className="flex items-center space-x-4">
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">Rs.</span>
                   <input
                     type="number"
                     name="minPrice"
@@ -186,7 +173,7 @@ const FilterBar = () => {
                 </div>
                 <span className="text-gray-400">to</span>
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">Rs.</span>
                   <input
                     type="number"
                     name="maxPrice"
@@ -198,6 +185,32 @@ const FilterBar = () => {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Region - Now a text input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+              <input
+                type="text"
+                name="region"
+                value={filters.region}
+                onChange={handleFilterChange}
+                placeholder="e.g., Western"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* City - Now a text input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+              <input
+                type="text"
+                name="city"
+                value={filters.city}
+                onChange={handleFilterChange}
+                placeholder="e.g., Colombo"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
             </div>
           </div>
 
@@ -214,7 +227,6 @@ const FilterBar = () => {
                 </span>
               )}
             </button>
-            
             <button
               onClick={clearFilters}
               className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
@@ -225,16 +237,15 @@ const FilterBar = () => {
         </div>
       </div>
 
-      {/* Mobile filter sidebar overlay - Only shown when open on mobile */}
+      {/* Mobile filter sidebar overlay */}
       {isMobile && (
-        <div 
+        <div
           className={`fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300 ${
             isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
           onClick={() => setIsOpen(false)}
         >
-          {/* Mobile filter sidebar - Full width from left edge */}
-          <div 
+          <div
             className={`fixed left-0 top-0 bottom-0 bg-white mt-6 w-full max-w-xs h-full overflow-y-auto transition-transform duration-300 p-6 shadow-xl ${
               isOpen ? "translate-x-0" : "-translate-x-full"
             }`}
@@ -244,8 +255,8 @@ const FilterBar = () => {
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <Filter size={20} /> Filter Vehicles
               </h2>
-              <button 
-                onClick={() => setIsOpen(false)} 
+              <button
+                onClick={() => setIsOpen(false)}
                 className="p-1 rounded-full hover:bg-gray-100"
                 aria-label="Close filters"
               >
@@ -254,27 +265,21 @@ const FilterBar = () => {
             </div>
 
             <div className="space-y-5">
-              {/* Same filter fields as desktop */}
               {/* Vehicle Type */}
               <div className="group">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-                <div className="relative">
-                  <select
-                    name="vehicle_type"
-                    value={filters.vehicle_type}
-                    onChange={handleFilterChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 transition-all"
-                  >
-                    <option value="">All Types</option>
-                    <option value="SUV">SUV</option>
-                    <option value="Sedan">Sedan</option>
-                    <option value="Truck">Truck</option>
-                    <option value="Hatchback">Hatchback</option>
-                    <option value="Coupe">Coupe</option>
-                    <option value="Van">Van</option>
-                  </select>
-                  <ChevronDown size={18} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
-                </div>
+                <select
+                  name="vehicle_type"
+                  value={filters.vehicle_type}
+                  onChange={handleFilterChange}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option value="">All Types</option>
+                  <option value="car">Car</option>
+                  <option value="van">Van</option>
+                  <option value="jeep/suv">Jeep/SUV</option>
+                  <option value="double-cab">Double Cab</option>
+                </select>
               </div>
 
               {/* Model */}
@@ -285,7 +290,7 @@ const FilterBar = () => {
                   name="model"
                   value={filters.model}
                   onChange={handleFilterChange}
-                  placeholder="e.g., Camry"
+                  placeholder="e.g., Corolla"
                   className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
@@ -308,22 +313,17 @@ const FilterBar = () => {
               {/* Fuel Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
-                <div className="relative">
-                  <select
-                    name="fuelType"
-                    value={filters.fuelType}
-                    onChange={handleFilterChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 transition-all"
-                  >
-                    <option value="">All Fuel Types</option>
-                    <option value="Petrol">Petrol</option>
-                    <option value="Diesel">Diesel</option>
-                    <option value="Electric">Electric</option>
-                    <option value="Hybrid">Hybrid</option>
-                    <option value="Plug-in Hybrid">Plug-in Hybrid</option>
-                  </select>
-                  <ChevronDown size={18} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
-                </div>
+                <select
+                  name="fuelType"
+                  value={filters.fuelType}
+                  onChange={handleFilterChange}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  <option value="">All Fuel Types</option>
+                  <option value="Petrol">Petrol</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="Electric">Electric</option>
+                </select>
               </div>
 
               {/* Price Range */}
@@ -331,7 +331,7 @@ const FilterBar = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-3">Price Range</label>
                 <div className="flex items-center space-x-4">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">Rs.</span>
                     <input
                       type="number"
                       name="minPrice"
@@ -344,7 +344,7 @@ const FilterBar = () => {
                   </div>
                   <span className="text-gray-400">to</span>
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">Rs.</span>
                     <input
                       type="number"
                       name="maxPrice"
@@ -356,6 +356,32 @@ const FilterBar = () => {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Region - Now a text input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                <input
+                  type="text"
+                  name="region"
+                  value={filters.region}
+                  onChange={handleFilterChange}
+                  placeholder="e.g., Western"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </div>
+
+              {/* City - Now a text input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={filters.city}
+                  onChange={handleFilterChange}
+                  placeholder="e.g., Colombo"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
               </div>
             </div>
 
@@ -372,7 +398,6 @@ const FilterBar = () => {
                   </span>
                 )}
               </button>
-              
               <button
                 onClick={clearFilters}
                 className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"

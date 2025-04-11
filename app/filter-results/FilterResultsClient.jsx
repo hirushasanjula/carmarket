@@ -66,6 +66,7 @@ export default function FilterResultsClient() {
             <div className="mt-2 flex justify-between text-xs text-gray-500">
               <span>{vehicle.vehicle_type}</span>
               <span>{vehicle.fuelType || "N/A"}</span>
+              <span>{vehicle.location.city}, {vehicle.location.region}</span>
             </div>
           </div>
         </Link>
