@@ -104,6 +104,8 @@ export async function PUT(request, { params }) {
       };
     }
 
+    
+
     const updatedVehicle = await Vehicle.findByIdAndUpdate(
       id,
       { $set: body },

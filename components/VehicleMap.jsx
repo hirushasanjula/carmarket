@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Add useEffect
 import { MapContainer, TileLayer, Marker, Popup, Circle, ZoomControl } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -12,7 +12,7 @@ const DefaultIcon = L.icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  shadowSize: [41, 41],
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -21,32 +21,37 @@ export default function LocationMap({
   latitude, 
   longitude, 
   title,
-  accuracy = 100, // Default accuracy radius in meters
-  theme = "modern", // Theme option: "modern", "dark", "satellite"
-  markerColor = "#3B82F6" // Primary color for the accuracy circle
+  accuracy = 100,
+  theme = "modern",
+  markerColor = "#3B82F6",
 }) {
   const position = [latitude, longitude];
   const [mapTheme, setMapTheme] = useState(theme);
-  
-  // Map theme tile layers
+  const [isMounted, setIsMounted] = useState(false); // Add mounted state
+
+  useEffect(() => {
+    setIsMounted(true); // Set to true after mount
+  }, []);
+
   const tiles = {
     modern: {
       url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
     },
     dark: {
       url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
     },
     satellite: {
       url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-    }
+      attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    },
   };
+
+  if (!isMounted || !latitude || !longitude) return null; // Prevent render until mounted
 
   return (
     <div className="relative rounded-xl overflow-hidden shadow-lg">
-      {/* Theme switcher */}
       <div className="absolute top-4 right-4 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-md p-1 flex space-x-1">
         {Object.keys(tiles).map((key) => (
           <button
@@ -60,11 +65,10 @@ export default function LocationMap({
           </button>
         ))}
       </div>
-      
-      {/* Map container */}
-      <MapContainer 
-        center={position} 
-        zoom={14} 
+
+      <MapContainer
+        center={position}
+        zoom={14}
         style={{ height: "400px", width: "100%" }}
         zoomControl={false}
         className="z-0"
@@ -73,20 +77,16 @@ export default function LocationMap({
           url={tiles[mapTheme].url}
           attribution={tiles[mapTheme].attribution}
         />
-        
-        {/* Accuracy circle */}
-        <Circle 
-          center={position} 
-          radius={accuracy} 
+        <Circle
+          center={position}
+          radius={accuracy}
           pathOptions={{
             color: markerColor,
             fillColor: markerColor,
             fillOpacity: 0.1,
-            weight: 1
-          }} 
+            weight: 1,
+          }}
         />
-        
-        {/* Standard location marker */}
         <Marker position={position}>
           <Popup className="rounded-lg shadow-lg">
             <div className="py-1">
@@ -98,12 +98,9 @@ export default function LocationMap({
             </div>
           </Popup>
         </Marker>
-        
-        {/* Zoom control */}
         <ZoomControl position="bottomright" />
       </MapContainer>
-      
-      {/* Info panel */}
+
       <div className="absolute left-4 bottom-4 z-10 bg-white dark:bg-gray-800 bg-opacity-90 dark:bg-opacity-90 rounded-lg p-3 shadow-lg max-w-xs">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-gray-900 dark:text-white text-sm">{title}</h3>

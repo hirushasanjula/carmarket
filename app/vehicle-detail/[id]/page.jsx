@@ -5,7 +5,7 @@ import { Phone, Mail, MapPin, Share2, Flag, ArrowLeft, MessageSquare, XCircleIco
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import RecommendedVehicles from "@/components/RecommendedVehicles";
-import VehicleMap from "@/components/VehicleMap";
+import LocationMap from "@/components/VehicleMap"; // Updated import
 
 export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState(null);
@@ -32,6 +32,7 @@ export default function VehicleDetailPage() {
           throw new Error(`Failed to fetch vehicle: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
+        console.log("Fetched vehicle data:", data); // For debugging
         setVehicle(data);
         setLoading(false);
       } catch (error) {
@@ -213,16 +214,16 @@ export default function VehicleDetailPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Description</h3>
               <p className="text-gray-600 mb-6">{vehicle.description || "No description provided"}</p>
-              {vehicle.location && vehicle.location.coordinates.coordinates[0] !== 0 && (
+              {vehicle.displayLocation && (
                 <div className="mt-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">Vehicle Location</h3>
-                  <VehicleMap
-                    latitude={vehicle.location.coordinates.coordinates[1]}
-                    longitude={vehicle.location.coordinates.coordinates[0]}
+                  <LocationMap
+                    latitude={vehicle.displayLocation.latitude}
+                    longitude={vehicle.displayLocation.longitude}
                     title={`${vehicle.year} ${vehicle.model} - ${vehicle.location.city}`}
                   />
                   <p className="text-sm text-gray-500 mt-2">
-                    Approximate location based on seller-provided coordinates.
+                    Approximate location based on {vehicle.location.city}, {vehicle.location.region}.
                   </p>
                 </div>
               )}
@@ -241,7 +242,6 @@ export default function VehicleDetailPage() {
                   <span>{vehicle.location.region}, {vehicle.location.city}</span>
                 </div>
               )}
-              {/* Updated Contact Details */}
               <div className="space-y-4 mb-6">
                 {vehicle.contactPhone && (
                   <div className="flex items-center text-gray-600">
