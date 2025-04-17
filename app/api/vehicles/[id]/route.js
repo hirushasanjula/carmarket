@@ -24,6 +24,65 @@ async function geocodeCity(region, city) {
   }
 }
 
+async function getComparison(vehicle) {
+  try {
+    const similarVehicles = await Vehicle.find({
+      _id: { $ne: vehicle._id }, // Exclude the current vehicle
+      vehicle_type: vehicle.vehicle_type,
+      model: { $regex: vehicle.model, $options: "i" },
+      year: { $gte: vehicle.year - 2, $lte: vehicle.year + 2 }, // Within 2 years
+      vehicle_condition: vehicle.vehicle_condition,
+      status: "Active",
+    })
+      .select("price year mileage")
+      .lean();
+
+    if (similarVehicles.length === 0) {
+      return null;
+    }
+
+    const prices = similarVehicles.map((v) => v.price);
+    const years = similarVehicles.map((v) => v.year);
+    const mileages = similarVehicles.filter((v) => v.mileage != null).map((v) => v.mileage);
+
+    const averagePrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    const averageYear = years.reduce((sum, year) => sum + year, 0) / years.length;
+    const averageMileage = mileages.length > 0 ? mileages.reduce((sum, mileage) => sum + mileage, 0) / mileages.length : null;
+
+    const pricePercentile =
+      prices.length > 1
+        ? ((prices.filter((p) => p < vehicle.price).length / prices.length) * 100).toFixed(0)
+        : 50;
+    const yearPercentile =
+      years.length > 1
+        ? ((years.filter((y) => y < vehicle.year).length / years.length) * 100).toFixed(0)
+        : 50;
+    const mileagePercentile =
+      mileages.length > 1
+        ? ((mileages.filter((m) => m < vehicle.mileage).length / mileages.length) * 100).toFixed(0)
+        : 50;
+
+    return {
+      price: {
+        average: Math.round(averagePrice),
+        percentile: Number(pricePercentile),
+      },
+      year: {
+        average: Math.round(averageYear * 10) / 10, // Round to 1 decimal
+        percentile: Number(yearPercentile),
+      },
+      mileage: mileages.length > 0 ? {
+        average: Math.round(averageMileage),
+        percentile: Number(mileagePercentile),
+      } : null,
+      similarCount: similarVehicles.length,
+    };
+  } catch (error) {
+    console.error("Error computing comparison:", error);
+    return null;
+  }
+}
+
 export async function GET(request, { params }) {
   let connection;
   try {
@@ -54,6 +113,9 @@ export async function GET(request, { params }) {
       latitude: cityLocation.latitude,
       longitude: cityLocation.longitude,
     };
+
+    // Add comparison data
+    vehicleData.comparison = await getComparison(vehicle);
 
     return NextResponse.json(vehicleData, { status: 200 });
   } catch (error) {

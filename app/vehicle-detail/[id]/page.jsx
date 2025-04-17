@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import RecommendedVehicles from "@/components/RecommendedVehicles";
 import LocationMap from "@/components/VehicleMap"; 
+import ComparisonTool from "@/components/ComparisonTool";
 
 export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState(null);
@@ -227,6 +228,12 @@ export default function VehicleDetailPage() {
                   </p>
                 </div>
               )}
+              <ComparisonTool
+                price={vehicle.price}
+                year={vehicle.year}
+                mileage={vehicle.mileage}
+                comparison={vehicle.comparison}
+              />
             </div>
           </div>
 

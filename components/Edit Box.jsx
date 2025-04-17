@@ -1,21 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     ...vehicle,
-    location: vehicle.location || { region: "", city: "" }, // Initialize as object
+    location: vehicle.location || { region: "", city: "" },
     contactPhone: vehicle.contactPhone || "",
+    contactEmail: vehicle.contactEmail || "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [comparison, setComparison] = useState(null);
+
+  useEffect(() => {
+    const fetchComparison = async () => {
+      try {
+        const response = await fetch(`/api/vehicles/${vehicle._id}/comparison`);
+        if (!response.ok) throw new Error("Failed to fetch comparison");
+        const { comparison } = await response.json();
+        setComparison(comparison);
+      } catch (error) {
+        console.error("Error fetching comparison:", error);
+      }
+    };
+    fetchComparison();
+  }, [vehicle._id]);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
 
     if (name === "region" || name === "city") {
-      // Handle nested location fields
       setFormData({
         ...formData,
         location: {
@@ -41,17 +56,17 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
     setIsSubmitting(true);
 
     try {
-      // Format the data for submission
       const submitData = { ...formData };
 
-      // Ensure location is an object (no parsing needed since we manage it directly)
       if (!submitData.location.region || !submitData.location.city) {
         throw new Error("Region and city are required");
       }
+      if (!submitData.model || !submitData.year || !submitData.price || !submitData.vehicle_type || !submitData.vehicle_condition) {
+        throw new Error("Please fill in all required fields");
+      }
 
-      // Call the parent's onSave function
       await onSave(submitData);
-      onClose(); // Close modal on success
+      onClose();
     } catch (error) {
       console.error("Error updating vehicle:", error);
       alert(error.message || "Failed to save changes. Please try again.");
@@ -59,6 +74,9 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
       setIsSubmitting(false);
     }
   };
+
+  const formatPrice = (value) => (value ? value.toLocaleString() : "N/A");
+  const formatMileage = (value) => (value ? `${value.toLocaleString()} km` : "N/A");
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -73,9 +91,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
         <form onSubmit={handleSubmit} className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Vehicle Type
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
               <select
                 name="vehicle_type"
                 value={formData.vehicle_type || ""}
@@ -92,9 +108,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Model
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
               <input
                 type="text"
                 name="model"
@@ -106,9 +120,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Condition
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
               <select
                 name="vehicle_condition"
                 value={formData.vehicle_condition || ""}
@@ -124,9 +136,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Year
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
               <input
                 type="number"
                 name="year"
@@ -135,12 +145,15 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 className="w-full p-2 border rounded-md"
                 required
               />
+              {comparison && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Suggested year: {comparison.year.average}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price (Rs.)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price (Rs.)</label>
               <input
                 type="number"
                 name="price"
@@ -149,12 +162,15 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 className="w-full p-2 border rounded-md"
                 required
               />
+              {comparison && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Suggested price: Rs. {formatPrice(comparison.price.average)}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mileage (km)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mileage (km)</label>
               <input
                 type="number"
                 name="mileage"
@@ -162,12 +178,15 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 onChange={handleChange}
                 className="w-full p-2 border rounded-md"
               />
+              {comparison && comparison.mileage && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Suggested mileage: {formatMileage(comparison.mileage.average)}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fuel Type
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
               <select
                 name="fuelType"
                 value={formData.fuelType || ""}
@@ -182,9 +201,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Transmission
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Transmission</label>
               <select
                 name="transmission"
                 value={formData.transmission || ""}
@@ -197,11 +214,8 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
               </select>
             </div>
 
-            {/* New Location Fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Region
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
               <input
                 type="text"
                 name="region"
@@ -213,9 +227,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
               <input
                 type="text"
                 name="city"
@@ -237,12 +249,22 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 placeholder="e.g., +94 123 456 789"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+              <input
+                type="email"
+                name="contactEmail"
+                value={formData.contactEmail || ""}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md"
+                placeholder="e.g., seller@example.com"
+              />
+            </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               name="description"
               value={formData.description || ""}
@@ -253,9 +275,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Current Images
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Current Images</label>
             <div className="grid grid-cols-3 gap-2">
               {formData.images && formData.images.length > 0 ? (
                 formData.images.map((image, index) => (
