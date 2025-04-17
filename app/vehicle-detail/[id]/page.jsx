@@ -5,7 +5,7 @@ import { Phone, Mail, MapPin, Share2, Flag, ArrowLeft, MessageSquare, XCircleIco
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import RecommendedVehicles from "@/components/RecommendedVehicles";
-import LocationMap from "@/components/VehicleMap"; // Updated import
+import LocationMap from "@/components/VehicleMap"; 
 
 export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState(null);

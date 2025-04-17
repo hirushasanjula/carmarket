@@ -7,6 +7,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     ...vehicle,
     location: vehicle.location || { region: "", city: "" }, // Initialize as object
+    contactPhone: vehicle.contactPhone || "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -222,6 +223,18 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
                 onChange={handleChange}
                 className="w-full p-2 border rounded-md"
                 required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
+              <input
+                type="tel"
+                name="contactPhone"
+                value={formData.contactPhone || ""}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md"
+                placeholder="e.g., +94 123 456 789"
               />
             </div>
           </div>
