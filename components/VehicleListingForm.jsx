@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { XCircleIcon } from "lucide-react";
+import { AlertMessage } from "./AlertMessage";
 
 export default function VehicleListingForm() {
   const fileInputRef = useRef(null);
@@ -23,12 +24,23 @@ export default function VehicleListingForm() {
     },
     description: "",
     images: [],
-    contactPhone: "", // New field
-    contactEmail: "", // New field
+    contactPhone: "",
+    contactEmail: "",
   });
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Auto-dismiss alerts after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (error) setError("");
+      if (successMessage) setSuccessMessage("");
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [error, successMessage]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,6 +98,7 @@ export default function VehicleListingForm() {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
+    setSuccessMessage("");
 
     if (
       !formData.model ||
@@ -95,7 +108,7 @@ export default function VehicleListingForm() {
       !formData.vehicle_condition ||
       !formData.location.region ||
       !formData.location.city ||
-      !formData.contactPhone // Require phone number
+      !formData.contactPhone
     ) {
       setError("Please fill in all required fields, including contact phone number");
       setIsSubmitting(false);
@@ -159,7 +172,7 @@ export default function VehicleListingForm() {
         contactEmail: "",
       });
       setImagePreviewUrls([]);
-      alert("Vehicle listing created successfully! It is pending admin approval.");
+      setSuccessMessage("Vehicle listing created successfully! It is pending admin approval.");
     } catch (err) {
       console.error("Form submission error:", err);
       setError(err.message || "An unexpected error occurred. Please allow location access if prompted.");
@@ -172,11 +185,18 @@ export default function VehicleListingForm() {
     <div className="max-w-4xl mt-12 mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Create Vehicle Listing</h1>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
-          {error}
-        </div>
-      )}
+      {/* Using the AlertMessage component for both error and success */}
+      <AlertMessage 
+        type="error" 
+        message={error} 
+        onDismiss={() => setError("")} 
+      />
+      
+      <AlertMessage 
+        type="success" 
+        message={successMessage} 
+        onDismiss={() => setSuccessMessage("")} 
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -368,7 +388,6 @@ export default function VehicleListingForm() {
           </p>
         </div>
 
-        {/* New Contact Details Section */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Contact Details <span className="text-red-500">*</span>
