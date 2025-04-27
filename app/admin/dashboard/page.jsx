@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
+import { AlertMessage } from "../../../components/AlertMessage"; // Make sure path is correct
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -13,6 +14,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [alert, setAlert] = useState({ show: false, type: "", message: "" });
 
   // Redirect non-admins
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function AdminDashboard() {
     fetchData();
   }, [activeTab, status, session]);
 
-  // Approve vehicle (reused from your code)
+  // Approve vehicle
   const handleApproveVehicle = async (vehicleId) => {
     try {
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
@@ -69,15 +71,23 @@ export default function AdminDashboard() {
       const result = await response.json();
       if (result.success) {
         setVehicles((prev) => prev.filter((vehicle) => vehicle._id !== vehicleId));
-        alert("Vehicle listing approved successfully!");
+        setAlert({
+          show: true,
+          type: "success",
+          message: "Vehicle listing approved successfully!"
+        });
       }
     } catch (error) {
       console.error("Error approving vehicle:", error);
-      setError(error.message);
+      setAlert({
+        show: true,
+        type: "error",
+        message: error.message || "Failed to approve vehicle"
+      });
     }
   };
 
-  // Reject vehicle (reused from your code)
+  // Reject vehicle
   const handleRejectVehicle = async (vehicleId) => {
     if (!confirm("Are you sure you want to reject this vehicle listing?")) return;
     try {
@@ -90,11 +100,19 @@ export default function AdminDashboard() {
       const result = await response.json();
       if (result.success) {
         setVehicles((prev) => prev.filter((vehicle) => vehicle._id !== vehicleId));
-        alert("Vehicle listing rejected successfully!");
+        setAlert({
+          show: true,
+          type: "success",
+          message: "Vehicle listing rejected successfully!"
+        });
       }
     } catch (error) {
       console.error("Error rejecting vehicle:", error);
-      setError(error.message);
+      setAlert({
+        show: true,
+        type: "error",
+        message: error.message || "Failed to reject vehicle"
+      });
     }
   };
 
@@ -110,10 +128,22 @@ export default function AdminDashboard() {
       setUsers((prev) =>
         prev.map((user) => (user._id === userId ? { ...user, role: newRole } : user))
       );
-      alert("User role updated successfully!");
+      setAlert({
+        show: true,
+        type: "success",
+        message: "User role updated successfully!"
+      });
     } catch (err) {
-      setError(err.message);
+      setAlert({
+        show: true,
+        type: "error",
+        message: err.message || "Failed to update user role"
+      });
     }
+  };
+
+  const dismissAlert = () => {
+    setAlert({ show: false, type: "", message: "" });
   };
 
   const formatPrice = (price) => (price ? price.toLocaleString() : "0");
@@ -127,6 +157,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto p-4">
+      {alert.show && (
+        <AlertMessage 
+          type={alert.type} 
+          message={alert.message} 
+          onDismiss={dismissAlert} 
+        />
+      )}
+
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Admin Dashboard</h1>
 
       {/* Tabs */}
@@ -154,7 +192,12 @@ export default function AdminDashboard() {
       </div>
 
       {/* Error Display */}
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </div>
+      )}
 
       {/* Listings Tab */}
       {activeTab === "listings" && (

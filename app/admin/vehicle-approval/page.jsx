@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
-
+import { AlertMessage } from "../../../components/AlertMessage"; // Make sure path is correct
 
 const AdminVehicleApproval = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
+  const [alert, setAlert] = useState({ show: false, type: "", message: "" });
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role === "admin") {
@@ -58,11 +59,19 @@ const AdminVehicleApproval = () => {
         setVehicles((prevVehicles) =>
           prevVehicles.filter((vehicle) => vehicle._id !== vehicleId)
         );
-        alert("Vehicle listing approved successfully!");
+        setAlert({
+          show: true,
+          type: "success",
+          message: "Vehicle listing approved successfully!"
+        });
       }
     } catch (error) {
       console.error("Error approving vehicle:", error);
-      setError(error.message);
+      setAlert({
+        show: true,
+        type: "error",
+        message: error.message || "Failed to approve vehicle"
+      });
     }
   };
 
@@ -87,12 +96,24 @@ const AdminVehicleApproval = () => {
         setVehicles((prevVehicles) =>
           prevVehicles.filter((vehicle) => vehicle._id !== vehicleId)
         );
-        alert("Vehicle listing rejected successfully!");
+        setAlert({
+          show: true,
+          type: "success", 
+          message: "Vehicle listing rejected successfully!"
+        });
       }
     } catch (error) {
       console.error("Error rejecting vehicle:", error);
-      setError(error.message);
+      setAlert({
+        show: true, 
+        type: "error", 
+        message: error.message || "Failed to reject vehicle"
+      });
     }
+  };
+
+  const dismissAlert = () => {
+    setAlert({ show: false, type: "", message: "" });
   };
 
   const formatPrice = (price) => (price ? price.toLocaleString() : "0");
@@ -141,6 +162,14 @@ const AdminVehicleApproval = () => {
 
   return (
     <div className="container mx-auto p-4">
+      {alert.show && (
+        <AlertMessage 
+          type={alert.type} 
+          message={alert.message} 
+          onDismiss={dismissAlert} 
+        />
+      )}
+
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         Admin Vehicle Approval
       </h1>

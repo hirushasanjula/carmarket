@@ -141,7 +141,7 @@ export async function POST(request) {
   }
 }
 
-// GET method unchanged
+// GET method 
 export async function GET(request) {
   let connection;
   try {
@@ -155,7 +155,7 @@ export async function GET(request) {
     const fuelType = url.searchParams.get("fuelType")?.trim();
     const minPrice = url.searchParams.get("minPrice")?.trim();
     const maxPrice = url.searchParams.get("maxPrice")?.trim();
-    const region = url.searchParams.get("region")?.trim(); // New param
+    const region = url.searchParams.get("region")?.trim(); 
     const city = url.searchParams.get("city")?.trim();
 
     connection = await connectToDatabase();
