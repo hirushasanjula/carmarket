@@ -12,16 +12,20 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [comparison, setComparison] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchComparison = async () => {
       try {
-        const response = await fetch(`/api/vehicles/${vehicle._id}/comparison`);
-        if (!response.ok) throw new Error("Failed to fetch comparison");
-        const { comparison } = await response.json();
-        setComparison(comparison);
+        const response = await fetch(`/api/vehicles/${vehicle._id}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch vehicle data: ${response.statusText}`);
+        }
+        const vehicleData = await response.json();
+        setComparison(vehicleData.comparison);
       } catch (error) {
         console.error("Error fetching comparison:", error);
+        setError("Unable to load comparison data. You can still edit the listing.");
       }
     };
     fetchComparison();
@@ -54,6 +58,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
     try {
       const submitData = { ...formData };
@@ -69,7 +74,7 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
       onClose();
     } catch (error) {
       console.error("Error updating vehicle:", error);
-      alert(error.message || "Failed to save changes. Please try again.");
+      setError(error.message || "Failed to save changes. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -89,6 +94,11 @@ const EditVehicleModal = ({ vehicle, onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-4">
+          {error && (
+            <div className="mb-4 p-2 bg-red-100 text-red-600 rounded">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>

@@ -129,7 +129,6 @@ export async function GET(request, { params }) {
   }
 }
 
-// Update vehicle by ID
 export async function PUT(request, { params }) {
   let connection;
   try {
@@ -163,17 +162,24 @@ export async function PUT(request, { params }) {
       body.location = {
         region: body.location.region,
         city: body.location.city,
+        coordinates: body.location.coordinates || vehicle.location.coordinates,
       };
     }
 
-    
-
     const updatedVehicle = await Vehicle.findByIdAndUpdate(
       id,
-      { $set: body },
+      { $set: { ...body, status: "Pending", updatedAt: new Date() } },
       { new: true, runValidators: true }
+    ).populate("user", "name email mobile");
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Vehicle listing updated successfully",
+        vehicle: updatedVehicle,
+      },
+      { status: 200 }
     );
-    return NextResponse.json(updatedVehicle, { status: 200 });
   } catch (error) {
     console.error("Error updating vehicle:", error);
     if (error.name === "ValidationError") {
@@ -198,7 +204,6 @@ export async function PUT(request, { params }) {
   }
 }
 
-// Delete vehicle by ID
 export async function DELETE(request, { params }) {
   let connection;
   try {
@@ -235,7 +240,6 @@ export async function DELETE(request, { params }) {
   }
 }
 
-// Update vehicle status by ID (admin only)
 export async function PATCH(request, { params }) {
   let connection;
   try {
