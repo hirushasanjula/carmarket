@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -12,6 +12,7 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -21,6 +22,13 @@ export default function Messages() {
       fetchMessages();
     }
   }, [status, session, router]);
+
+  // Scroll to bottom of messages
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, selectedUser]);
 
   const fetchMessages = async () => {
     try {
@@ -41,21 +49,51 @@ export default function Messages() {
     if (!selectedUser || !newMessage.trim()) return;
 
     try {
+      const messageContent = newMessage.trim();
+      setNewMessage(""); // Clear input immediately
+
+      // Create a temporary message with all required fields
+      const tempMessage = {
+        _id: `temp-${Date.now()}`, // Temporary ID until server responds
+        content: messageContent,
+        sender: {
+          _id: session.user.id,
+          name: session.user.name,
+          email: session.user.email
+        },
+        receiver: selectedUser,
+        createdAt: new Date().toISOString(),
+        read: false,
+        isTemp: true // Flag to identify temp messages
+      };
+
+      // Add the temporary message to state immediately
+      setMessages(prev => [tempMessage, ...prev]);
+
+      // Send to server
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           receiverId: selectedUser._id,
-          content: newMessage,
+          content: messageContent,
           vehicleId: null,
         }),
       });
+
       if (!response.ok) throw new Error("Failed to send message");
       const { message } = await response.json();
-      setMessages((prev) => [message, ...prev]);
-      setNewMessage("");
+
+      // Replace the temporary message with the server response
+      setMessages(prev => 
+        prev.map(msg => 
+          msg._id === tempMessage._id ? { ...message, sender: tempMessage.sender, receiver: tempMessage.receiver } : msg
+        )
+      );
     } catch (err) {
       setError(err.message);
+      // Remove the temporary message if there was an error
+      setMessages(prev => prev.filter(msg => !msg.isTemp));
     }
   };
 
@@ -75,15 +113,47 @@ export default function Messages() {
     }
   };
 
-  const conversations = messages.reduce((acc, msg) => {
-    const otherUser =
-      msg.sender._id === session?.user.id ? msg.receiver : msg.sender;
-    if (!acc[otherUser._id]) {
-      acc[otherUser._id] = { user: otherUser, messages: [] };
+  // Process messages into conversations
+  const getConversations = () => {
+    if (!session?.user?.id || !messages.length) return {};
+    
+    return messages.reduce((acc, msg) => {
+      // Skip messages with incomplete data
+      if (!msg.sender || !msg.receiver) {
+        console.warn("Incomplete message data:", msg);
+        return acc;
+      }
+      
+      // Determine the other user in the conversation
+      const otherUser = msg.sender._id === session.user.id ? msg.receiver : msg.sender;
+      
+      if (!otherUser || !otherUser._id) {
+        console.warn("Missing user data in message:", msg);
+        return acc;
+      }
+      
+      if (!acc[otherUser._id]) {
+        acc[otherUser._id] = { user: otherUser, messages: [] };
+      }
+      
+      acc[otherUser._id].messages.push(msg);
+      return acc;
+    }, {});
+  };
+  
+  const conversations = getConversations();
+
+  // Find conversation messages for selected user
+  const getConversationMessages = () => {
+    if (!selectedUser || !selectedUser._id || !conversations[selectedUser._id]) {
+      return [];
     }
-    acc[otherUser._id].messages.push(msg);
-    return acc;
-  }, {});
+    
+    return [...conversations[selectedUser._id].messages]
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  };
+
+  const currentMessages = getConversationMessages();
 
   if (status === "loading" || loading) {
     return <div className="text-center py-8">Loading...</div>;
@@ -96,11 +166,13 @@ export default function Messages() {
         {Object.keys(conversations).length === 0 ? (
           <p className="text-gray-600">No messages yet</p>
         ) : (
-          Object.values(conversations).map((conv) => (
+          // Map through conversations with explicit index for keying
+          Object.entries(conversations).map(([userId, conv], index) => (
             <div
-              key={conv.user._id} // Unique key for conversation list
+              key={`conversation-${userId}-${index}`}
               onClick={() => {
                 setSelectedUser(conv.user);
+                // Mark unread messages as read
                 conv.messages.forEach((msg) => {
                   if (!msg.read && msg.receiver._id === session.user.id) {
                     markAsRead(msg._id);
@@ -115,7 +187,7 @@ export default function Messages() {
             >
               <p className="font-semibold">{conv.user.name}</p>
               <p className="text-sm text-gray-600 truncate">
-                {conv.messages[0].content}
+                {conv.messages[0]?.content || "No messages"}
               </p>
             </div>
           ))
@@ -126,25 +198,23 @@ export default function Messages() {
         {selectedUser ? (
           <>
             <h2 className="text-xl font-bold mb-4">Chat with {selectedUser.name}</h2>
-            <div className="h-96 overflow-y-auto mb-4 flex flex-col gap-2">
-              {conversations[selectedUser._id]?.messages
-                .slice()
-                .reverse()
-                .map((msg) => (
-                  <div
-                    key={msg._id} // Rely solely on msg._id, assuming it's unique
-                    className={`p-3 rounded-lg max-w-[70%] ${
-                      msg.sender._id === session.user.id
-                        ? "bg-blue-500 text-white self-end"
-                        : "bg-gray-200 text-gray-800 self-start"
-                    }`}
-                  >
-                    <p>{msg.content}</p>
-                    <p className="text-xs mt-1 opacity-75">
-                      {new Date(msg.createdAt).toLocaleTimeString()}
-                    </p>
-                  </div>
-                ))}
+            <div className="h-96 overflow-y-auto mb-4 flex flex-col gap-2 p-2">
+              {currentMessages.map((msg, index) => (
+                <div
+                  key={`msg-${msg._id || index}-${msg.isTemp ? 'temp' : ''}`}
+                  className={`p-3 rounded-lg max-w-[70%] ${
+                    msg.sender._id === session.user.id
+                      ? "bg-blue-500 text-white self-end"
+                      : "bg-gray-200 text-gray-800 self-start"
+                  }`}
+                >
+                  <p>{msg.content}</p>
+                  <p className="text-xs mt-1 opacity-75">
+                    {new Date(msg.createdAt).toLocaleTimeString()}
+                  </p>
+                </div>
+              ))}
+              <div ref={messagesEndRef} /> {/* For auto-scrolling */}
             </div>
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <input

@@ -58,7 +58,7 @@ const SignUp = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4">
-      <Card className="w-full max-w-md shadow-2xl bg-white/95 backdrop-blur">
+      <Card className="w-full mt-16 max-w-md shadow-2xl bg-white/95 backdrop-blur">
         <CardHeader className="space-y-4 pb-6">
           <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-blue-600 bg-clip-text text-transparent">
             Create Account

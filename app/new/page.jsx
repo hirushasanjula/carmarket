@@ -1,7 +1,15 @@
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
 import Head from 'next/head';
 import VehicleListingForm from '@/components/VehicleListingForm';
 
-const CreateVehiclePage = () => {
+export default async function CreateVehiclePage() {
+  const session = await auth();
+  
+  if (!session || !session.user) {
+    redirect('/sign-in?callbackUrl=/new');
+  }
+
   return (
     <div>
       <Head>
@@ -17,6 +25,4 @@ const CreateVehiclePage = () => {
       </main>
     </div>
   );
-};
-
-export default CreateVehiclePage;
+}
