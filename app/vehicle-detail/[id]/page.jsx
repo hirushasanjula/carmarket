@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import RecommendedVehicles from "@/components/RecommendedVehicles";
 import LocationMap from "@/components/VehicleMap"; 
 import ComparisonTool from "@/components/ComparisonTool";
+import VehicleDetailLoading from "@/components/VehicleDetailLoading";
 
 export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState(null);
@@ -35,7 +36,10 @@ export default function VehicleDetailPage() {
         const data = await response.json();
         console.log("Fetched vehicle data:", data); // For debugging
         setVehicle(data);
-        setLoading(false);
+        // Simulate a minimum loading time for better UX
+        setTimeout(() => {
+          setLoading(false);
+        }, 800); // Minimum 800ms loading time to see progress
       } catch (error) {
         console.error("Error fetching vehicle details:", error);
         setError(error.message);
@@ -140,7 +144,8 @@ export default function VehicleDetailPage() {
     };
   };
 
-  if (loading) return <div className="min-h-screen bg-gray-50 flex justify-center items-center"><p>Loading vehicle details...</p></div>;
+  if (loading) return <VehicleDetailLoading />;
+  
   if (error) return (
     <div className="min-h-screen bg-gray-50 flex justify-center items-center">
       <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg max-w-md">
@@ -152,6 +157,7 @@ export default function VehicleDetailPage() {
       </div>
     </div>
   );
+  
   if (!vehicle) return (
     <div className="min-h-screen bg-gray-50 flex justify-center items-center">
       <p>Vehicle not found</p>

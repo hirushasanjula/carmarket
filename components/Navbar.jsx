@@ -100,7 +100,7 @@ const Navbar = () => {
                 }`}
               >
                 <GiCarWheel className={`text-2xl sm:text-3xl ${scrolled ? "text-blue-600" : "text-blue-300"}`} />
-                <span className="hidden xs:block">CarMarket</span>
+                <span className=" xs:block">CarMarket</span>
               </Link>
             </div>
 
