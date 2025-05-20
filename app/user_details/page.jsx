@@ -223,7 +223,7 @@ const VehicleListings = () => {
 
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{getVehicleTitle(vehicle)}</h3>
-                <p className="text-2xl font-bold text-blue-600 mb-2">${formatPrice(vehicle.price)}</p>
+                <p className="text-2xl font-bold text-blue-600 mb-2">Rs.{formatPrice(vehicle.price)}</p>
                 
                 <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 mb-3">
                   <span className="flex items-center">

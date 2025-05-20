@@ -115,7 +115,7 @@ const SignIn = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <Button
               onClick={(e) => handleProvider(e, "google")}
               variant="outline"
@@ -123,14 +123,6 @@ const SignIn = () => {
             >
               <FcGoogle className="h-6 w-6 mr-2" />
               Google
-            </Button>
-            <Button
-              onClick={(e) => handleProvider(e, "github")}
-              variant="outline"
-              className="h-12 border-2 hover:bg-gray-50 transition-all duration-300"
-            >
-              <FaGithub className="h-6 w-6 mr-2" />
-              GitHub
             </Button>
           </div>
 
