@@ -90,7 +90,7 @@ const Navbar = () => {
           scrolled ? "bg-white/90 backdrop-blur-md shadow-md py-2" : "bg-gradient-to-r from-blue-800 to-blue-600 py-3"
         }`}
       >
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-8xl">
           <div className="flex items-center justify-between h-14">
             <div className="flex-shrink-0">
               <Link

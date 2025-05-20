@@ -87,7 +87,7 @@ const SearchBar = ({ scrolled }) => {
             className={`absolute left-0 top-0 p-2 rounded-full transition-all duration-300 ${
               scrolled
                 ? "text-blue-600 hover:bg-blue-50"
-                : "text-blue-600 hover:bg-blue-100"
+                : "text-white hover:bg-blue-400"
             }`}
           >
             <Search size={16} />
