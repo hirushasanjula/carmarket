@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { Car, Truck, Compass, Calendar, Fuel, Gauge, ArrowRight, Heart, MapPin } from "lucide-react";
+import { CiBookmark } from "react-icons/ci";
+import { PiVanLight } from "react-icons/pi";
+import { TbCarSuv } from "react-icons/tb";
+import { FaTruckPickup } from "react-icons/fa6";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
@@ -20,9 +24,9 @@ const VehicleSelectionBar = () => {
 
   const vehicleCategories = [
     { id: "car", name: "Cars", icon: <Car size={16} /> },
-    { id: "van", name: "Vans", icon: <Truck size={16} /> },
-    { id: "jeep/suv", name: "SUVs", icon: <Compass size={16} /> },
-    { id: "double-cab", name: "Double Cabs", icon: <Truck size={16} /> },
+    { id: "van", name: "Vans", icon: <PiVanLight size={17} /> },
+    { id: "jeep/suv", name: "SUVs", icon: <TbCarSuv size={16} /> },
+    { id: "double-cab", name: "Double Cabs", icon: <FaTruckPickup size={16} /> },
   ];
 
   useEffect(() => {
@@ -229,7 +233,7 @@ const VehicleSelectionBar = () => {
                     onClick={(e) => handleBookmark(vehicle._id, e)}
                     className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-md transition-all hover:bg-white hover:scale-110"
                   >
-                    <Heart
+                    <CiBookmark
                       size={16}
                       className={`${
                         savedVehicles.includes(vehicle._id) ? "fill-red-500 text-red-500" : "text-gray-500"
