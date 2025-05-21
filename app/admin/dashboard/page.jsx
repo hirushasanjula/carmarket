@@ -7,13 +7,8 @@ import { CheckCircleIcon, XCircleIcon } from "lucide-react";
 import { AlertMessage } from "../../../components/AlertMessage"; // Make sure path is correct
 
 export default function AdminDashboard() {
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      router.push("/sign-in");
-    },
-  });
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState("listings");
   const [vehicles, setVehicles] = useState([]);
   const [users, setUsers] = useState([]);
@@ -21,28 +16,42 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState({ show: false, type: "", message: "" });
   const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Check authentication and admin role
   useEffect(() => {
-    // Debug logs to help troubleshoot
-    console.log("Session status:", status);
-    console.log("Session data:", session);
-    
-    if (status === "loading") return;
-    
-    if (status === "authenticated") {
-      if (session?.user?.role === "admin") {
-        setIsAdmin(true);
-      } else {
-        console.log("User is not an admin, redirecting");
-        router.push("/");
+    const checkAuth = async () => {
+      // Debug logs to help troubleshoot
+      console.log("Session status:", status);
+      console.log("Session data:", session);
+      
+      if (status === "loading") return;
+      
+      if (status === "unauthenticated") {
+        console.log("User is not authenticated, redirecting to sign-in");
+        router.push("/sign-in");
+        return;
       }
-    }
+      
+      if (status === "authenticated") {
+        if (session?.user?.role === "admin") {
+          console.log("User confirmed as admin");
+          setIsAdmin(true);
+        } else {
+          console.log("User is not an admin, redirecting");
+          router.push("/");
+        }
+      }
+      
+      setAuthChecked(true);
+    };
+
+    checkAuth();
   }, [status, session, router]);
 
   // Fetch data based on active tab
   useEffect(() => {
-    if (status !== "authenticated" || !isAdmin) return;
+    if (!authChecked || status !== "authenticated" || !isAdmin) return;
 
     const fetchData = async () => {
       setLoading(true);
@@ -50,26 +59,38 @@ export default function AdminDashboard() {
       try {
         if (activeTab === "listings") {
           const response = await fetch("/api/vehicles/pending", {
+            method: "GET",
             headers: { 
               "Content-Type": "application/json",
               // Add cache headers to prevent caching issues
               "Cache-Control": "no-cache, no-store, must-revalidate",
               "Pragma": "no-cache"
-            },
+            }
           });
-          if (!response.ok) throw new Error("Failed to fetch pending vehicles");
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Failed to fetch pending vehicles: ${response.status}`);
+          }
+          
           const data = await response.json();
           setVehicles(Array.isArray(data) ? data : []);
         } else if (activeTab === "users") {
           const response = await fetch("/api/admin/users", {
+            method: "GET",
             headers: { 
               "Content-Type": "application/json",
               // Add cache headers to prevent caching issues
               "Cache-Control": "no-cache, no-store, must-revalidate",
               "Pragma": "no-cache" 
-            },
+            }
           });
-          if (!response.ok) throw new Error("Failed to fetch users");
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Failed to fetch users: ${response.status}`);
+          }
+          
           const data = await response.json();
           setUsers(Array.isArray(data) ? data : []);
         }
@@ -82,17 +103,26 @@ export default function AdminDashboard() {
     };
 
     fetchData();
-  }, [activeTab, status, isAdmin]);
+  }, [activeTab, status, isAdmin, authChecked]);
 
   // Approve vehicle
   const handleApproveVehicle = async (vehicleId) => {
     try {
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          // Ensure authorization headers are included
+          // The Next.js middleware will add the authorization header automatically
+        },
         body: JSON.stringify({ status: "Active" }),
       });
-      if (!response.ok) throw new Error(`Failed to approve vehicle: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to approve vehicle: ${response.status}`);
+      }
+      
       const result = await response.json();
       if (result.success) {
         setVehicles((prev) => prev.filter((vehicle) => vehicle._id !== vehicleId));
@@ -118,10 +148,19 @@ export default function AdminDashboard() {
     try {
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          // Ensure authorization headers are included
+          // The Next.js middleware will add the authorization header automatically
+        },
         body: JSON.stringify({ status: "Rejected" }),
       });
-      if (!response.ok) throw new Error(`Failed to reject vehicle: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to reject vehicle: ${response.status}`);
+      }
+      
       const result = await response.json();
       if (result.success) {
         setVehicles((prev) => prev.filter((vehicle) => vehicle._id !== vehicleId));
@@ -146,10 +185,19 @@ export default function AdminDashboard() {
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          // Ensure authorization headers are included
+          // The Next.js middleware will add the authorization header automatically
+        },
         body: JSON.stringify({ role: newRole }),
       });
-      if (!response.ok) throw new Error("Failed to update role");
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to update role: ${response.status}`);
+      }
+      
       setUsers((prev) =>
         prev.map((user) => (user._id === userId ? { ...user, role: newRole } : user))
       );
@@ -178,8 +226,20 @@ export default function AdminDashboard() {
       : "/api/placeholder/400/300";
 
   // Show loading state while authentication is in progress
-  if (status === "loading") {
-    return <div className="container mx-auto p-4 text-center py-8">Loading...</div>;
+  if (status === "loading" || !authChecked) {
+    return (
+      <div className="container mx-auto p-4 text-center py-8">
+        <div className="flex flex-col items-center justify-center min-h-[300px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-lg">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If not authenticated, show nothing (redirect will happen in useEffect)
+  if (status === "unauthenticated") {
+    return <div className="container mx-auto p-4 text-center py-8">Redirecting to sign-in...</div>;
   }
   
   // If not an admin, show nothing (redirect will happen in useEffect)
