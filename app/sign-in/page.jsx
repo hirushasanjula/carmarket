@@ -12,11 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { AlertMessage } from "@/components/AlertMessage";
 import { TriangleAlert } from "lucide-react";
 
 const SignIn = () => {
@@ -25,6 +24,9 @@ const SignIn = () => {
   const [pending, setPending] = useState(false);
   const router = useRouter();
   const [error, setError] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState("success");
+  const [alertMessage, setAlertMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,16 +40,30 @@ const SignIn = () => {
     setPending(false);
     if (res?.error) {
       setError("Invalid email or password");
+      setAlertType("error");
+      setAlertMessage("Invalid email or password");
+      setShowAlert(true);
     } else {
-      window.alert("Login successful");
-      toast.success("Login successful");
-      router.push("/");
+      setAlertType("success");
+      setAlertMessage("Login successful");
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
+        router.push("/");
+      }, 2000); // Auto-close after 2 seconds and redirect
     }
   };
 
   const handleProvider = (event, value) => {
     event.preventDefault();
     signIn(value, { callbackUrl: "/" });
+  };
+
+  const handleAlertDismiss = () => {
+    setShowAlert(false);
+    if (alertType === "success") {
+      router.push("/");
+    }
   };
 
   return (
@@ -137,6 +153,14 @@ const SignIn = () => {
           </p>
         </CardContent>
       </Card>
+
+      {showAlert && (
+        <AlertMessage
+          type={alertType}
+          message={alertMessage}
+          onDismiss={handleAlertDismiss}
+        />
+      )}
     </div>
   );
 };
