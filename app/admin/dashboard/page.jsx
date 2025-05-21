@@ -7,28 +7,49 @@ import { CheckCircleIcon, XCircleIcon } from "lucide-react";
 import { AlertMessage } from "../../../components/AlertMessage"; // Make sure path is correct
 
 export default function AdminDashboard() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      // Only redirect to sign-in if truly unauthenticated
+      // This prevents redirection loops
+      router.replace("/sign-in?callbackUrl=/admin/dashboard");
+    },
+  });
   const [activeTab, setActiveTab] = useState("listings");
   const [vehicles, setVehicles] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState({ show: false, type: "", message: "" });
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Redirect non-admins
+  // Check authentication and admin role
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.role !== "admin") {
-      router.push("/");
-    }
-    if (status === "unauthenticated") {
-      router.push("/sign-in");
+    // Debug logs to help troubleshoot
+    console.log("Session status:", status);
+    console.log("Session data:", session);
+    
+    if (status === "loading") return;
+    
+    if (status === "authenticated") {
+      if (session?.user?.role === "admin") {
+        setIsAdmin(true);
+        // Make sure URL reflects correct path
+        if (window.location.pathname !== "/admin/dashboard") {
+          // Use replace to update URL without adding to history
+          router.replace("/admin/dashboard", undefined, { shallow: true });
+        }
+      } else {
+        console.log("User is not an admin, redirecting");
+        router.replace("/");
+      }
     }
   }, [status, session, router]);
 
   // Fetch data based on active tab
   useEffect(() => {
-    if (status !== "authenticated" || session?.user?.role !== "admin") return;
+    if (status !== "authenticated" || !isAdmin) return;
 
     const fetchData = async () => {
       setLoading(true);
@@ -36,20 +57,31 @@ export default function AdminDashboard() {
       try {
         if (activeTab === "listings") {
           const response = await fetch("/api/vehicles/pending", {
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              // Add cache headers to prevent caching issues
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache"
+            },
           });
           if (!response.ok) throw new Error("Failed to fetch pending vehicles");
           const data = await response.json();
           setVehicles(Array.isArray(data) ? data : []);
         } else if (activeTab === "users") {
           const response = await fetch("/api/admin/users", {
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              // Add cache headers to prevent caching issues
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache" 
+            },
           });
           if (!response.ok) throw new Error("Failed to fetch users");
           const data = await response.json();
           setUsers(Array.isArray(data) ? data : []);
         }
       } catch (err) {
+        console.error("Error fetching data:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -57,7 +89,7 @@ export default function AdminDashboard() {
     };
 
     fetchData();
-  }, [activeTab, status, session]);
+  }, [activeTab, status, isAdmin]);
 
   // Approve vehicle
   const handleApproveVehicle = async (vehicleId) => {
@@ -152,8 +184,15 @@ export default function AdminDashboard() {
       ? vehicle.images[0]
       : "/api/placeholder/400/300";
 
-  if (status === "loading") return <div className="text-center py-8">Loading...</div>;
-  if (session?.user?.role !== "admin") return null;
+  // Show loading state while authentication is in progress
+  if (status === "loading") {
+    return <div className="container mx-auto p-4 text-center py-8">Loading...</div>;
+  }
+  
+  // If not an admin, show nothing (redirect will happen in useEffect)
+  if (!isAdmin && status !== "loading") {
+    return <div className="container mx-auto p-4 text-center py-8">Verifying admin access...</div>;
+  }
 
   return (
     <div className="container mx-auto p-4">

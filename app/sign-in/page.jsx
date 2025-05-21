@@ -1,338 +1,168 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardDescription,
+  CardContent,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
+import { FcGoogle } from "react-icons/fc";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { CheckCircleIcon, XCircleIcon } from "lucide-react";
-import { AlertMessage } from "../../components/AlertMessage"; 
+import { AlertMessage } from "@/components/AlertMessage";
+import { TriangleAlert } from "lucide-react";
 
-export default function AdminDashboard() {
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      router.push("/sign-in");
-    },
-  });
+const SignIn = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [pending, setPending] = useState(false);
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("listings");
-  const [vehicles, setVehicles] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [alert, setAlert] = useState({ show: false, type: "", message: "" });
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [error, setError] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState("success");
+  const [alertMessage, setAlertMessage] = useState("");
 
-  // Check authentication and admin role
-  useEffect(() => {
-    // Debug logs to help troubleshoot
-    console.log("Session status:", status);
-    console.log("Session data:", session);
-    
-    if (status === "loading") return;
-    
-    if (status === "authenticated") {
-      if (session?.user?.role === "admin") {
-        setIsAdmin(true);
-      } else {
-        console.log("User is not an admin, redirecting");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setPending(true); // Show loading state
+    const res = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    });
+    setPending(false);
+    if (res?.error) {
+      setError("Invalid email or password");
+      setAlertType("error");
+      setAlertMessage("Invalid email or password");
+      setShowAlert(true);
+    } else {
+      setAlertType("success");
+      setAlertMessage("Login successful");
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
         router.push("/");
-      }
-    }
-  }, [status, session, router]);
-
-  // Fetch data based on active tab
-  useEffect(() => {
-    if (status !== "authenticated" || !isAdmin) return;
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        if (activeTab === "listings") {
-          const response = await fetch("/api/vehicles/pending", {
-            headers: { 
-              "Content-Type": "application/json",
-              // Add cache headers to prevent caching issues
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              "Pragma": "no-cache"
-            },
-          });
-          if (!response.ok) throw new Error("Failed to fetch pending vehicles");
-          const data = await response.json();
-          setVehicles(Array.isArray(data) ? data : []);
-        } else if (activeTab === "users") {
-          const response = await fetch("/api/admin/users", {
-            headers: { 
-              "Content-Type": "application/json",
-              // Add cache headers to prevent caching issues
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              "Pragma": "no-cache" 
-            },
-          });
-          if (!response.ok) throw new Error("Failed to fetch users");
-          const data = await response.json();
-          setUsers(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [activeTab, status, isAdmin]);
-
-  // Approve vehicle
-  const handleApproveVehicle = async (vehicleId) => {
-    try {
-      const response = await fetch(`/api/vehicles/${vehicleId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Active" }),
-      });
-      if (!response.ok) throw new Error(`Failed to approve vehicle: ${response.status}`);
-      const result = await response.json();
-      if (result.success) {
-        setVehicles((prev) => prev.filter((vehicle) => vehicle._id !== vehicleId));
-        setAlert({
-          show: true,
-          type: "success",
-          message: "Vehicle listing approved successfully!"
-        });
-      }
-    } catch (error) {
-      console.error("Error approving vehicle:", error);
-      setAlert({
-        show: true,
-        type: "error",
-        message: error.message || "Failed to approve vehicle"
-      });
+      }, 2000); // Auto-close after 2 seconds and redirect
     }
   };
 
-  // Reject vehicle
-  const handleRejectVehicle = async (vehicleId) => {
-    if (!confirm("Are you sure you want to reject this vehicle listing?")) return;
-    try {
-      const response = await fetch(`/api/vehicles/${vehicleId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Rejected" }),
-      });
-      if (!response.ok) throw new Error(`Failed to reject vehicle: ${response.status}`);
-      const result = await response.json();
-      if (result.success) {
-        setVehicles((prev) => prev.filter((vehicle) => vehicle._id !== vehicleId));
-        setAlert({
-          show: true,
-          type: "success",
-          message: "Vehicle listing rejected successfully!"
-        });
-      }
-    } catch (error) {
-      console.error("Error rejecting vehicle:", error);
-      setAlert({
-        show: true,
-        type: "error",
-        message: error.message || "Failed to reject vehicle"
-      });
+  const handleProvider = (event, value) => {
+    event.preventDefault();
+    signIn(value, { callbackUrl: "/" });
+  };
+
+  const handleAlertDismiss = () => {
+    setShowAlert(false);
+    if (alertType === "success") {
+      router.push("/");
     }
   };
-
-  // Update user role
-  const handleRoleUpdate = async (userId, newRole) => {
-    try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
-      });
-      if (!response.ok) throw new Error("Failed to update role");
-      setUsers((prev) =>
-        prev.map((user) => (user._id === userId ? { ...user, role: newRole } : user))
-      );
-      setAlert({
-        show: true,
-        type: "success",
-        message: "User role updated successfully!"
-      });
-    } catch (err) {
-      setAlert({
-        show: true,
-        type: "error",
-        message: err.message || "Failed to update user role"
-      });
-    }
-  };
-
-  const dismissAlert = () => {
-    setAlert({ show: false, type: "", message: "" });
-  };
-
-  const formatPrice = (price) => (price ? price.toLocaleString() : "0");
-  const getMainImage = (vehicle) =>
-    vehicle.images && vehicle.images.length > 0
-      ? vehicle.images[0]
-      : "/api/placeholder/400/300";
-
-  // Show loading state while authentication is in progress
-  if (status === "loading") {
-    return <div className="container mx-auto p-4 text-center py-8">Loading...</div>;
-  }
-  
-  // If not an admin, show nothing (redirect will happen in useEffect)
-  if (!isAdmin) {
-    return <div className="container mx-auto p-4 text-center py-8">Checking admin access...</div>;
-  }
 
   return (
-    <div className="container mx-auto p-4">
-      {alert.show && (
-        <AlertMessage 
-          type={alert.type} 
-          message={alert.message} 
-          onDismiss={dismissAlert} 
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4">
+      <Card className="w-full max-w-md shadow-2xl bg-white/95 backdrop-blur">
+        <CardHeader className="space-y-4 pb-6">
+          <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-blue-600 bg-clip-text text-transparent">
+            Welcome Back
+          </CardTitle>
+          <CardDescription className="text-base text-center">
+            Sign in to your account
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {!!error && (
+            <div className="bg-red-100 border-l-4 border-red-500 p-4 rounded-md flex items-center gap-x-2 text-red-700">
+              <TriangleAlert className="h-5 w-5" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-4">
+              <Input
+                type="email"
+                disabled={pending}
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-12 px-4 bg-gray-50/50 border-gray-200 focus:ring-2 focus:ring-purple-500"
+              />
+              <Input
+                type="password"
+                disabled={pending}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="h-12 px-4 bg-gray-50/50 border-gray-200 focus:ring-2 focus:ring-purple-500"
+              />
+              <div className="text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-blue-600 hover:text-blue-500 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+            </div>
+
+            <Button
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white font-medium text-lg transition-all duration-300"
+              disabled={pending}
+            >
+              {pending ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+
+          <div className="relative">
+            <Separator className="my-8" />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-sm text-gray-500">
+              or continue with
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <Button
+              onClick={(e) => handleProvider(e, "google")}
+              variant="outline"
+              className="h-12 border-2 hover:bg-gray-50 transition-all duration-300"
+            >
+              <FcGoogle className="h-6 w-6 mr-2" />
+              Google
+            </Button>
+          </div>
+
+          <p className="text-center text-sm text-gray-600">
+            Don’t have an account?{" "}
+            <Link
+              href="/sign-up"
+              className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              Sign up
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+
+      {showAlert && (
+        <AlertMessage
+          type={alertType}
+          message={alertMessage}
+          onDismiss={handleAlertDismiss}
         />
-      )}
-
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Admin Dashboard</h1>
-
-      {/* Tabs */}
-      <div className="flex border-b mb-6">
-        <button
-          onClick={() => setActiveTab("listings")}
-          className={`px-4 py-2 font-medium ${
-            activeTab === "listings"
-              ? "border-b-2 border-blue-600 text-blue-600"
-              : "text-gray-600 hover:text-blue-600"
-          }`}
-        >
-          Manage Listings
-        </button>
-        <button
-          onClick={() => setActiveTab("users")}
-          className={`px-4 py-2 font-medium ${
-            activeTab === "users"
-              ? "border-b-2 border-blue-600 text-blue-600"
-              : "text-gray-600 hover:text-blue-600"
-          }`}
-        >
-          User Management
-        </button>
-      </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-        </div>
-      )}
-
-      {/* Listings Tab */}
-      {activeTab === "listings" && (
-        <div>
-          {loading ? (
-            <div className="text-center py-8">Loading pending vehicles...</div>
-          ) : vehicles.length === 0 ? (
-            <div className="text-center p-8 bg-white rounded-lg shadow">
-              <p className="text-xl text-gray-600">No pending vehicle listings</p>
-              <p className="mt-2 text-gray-500">
-                All listings have been reviewed or none are pending.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {vehicles.map((vehicle) => (
-                <div
-                  key={vehicle._id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
-                >
-                  <div className="h-48">
-                    <img
-                      src={getMainImage(vehicle)}
-                      alt={vehicle.model}
-                      className="w-full h-full object-cover"
-                      onError={(e) => (e.target.src = "/api/placeholder/400/300")}
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {vehicle.year} {vehicle.model}
-                    </h3>
-                    <p className="text-xl font-bold text-blue-600 mb-2">
-                      ${formatPrice(vehicle.price)}
-                    </p>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Type: {vehicle.vehicle_type || "N/A"}
-                    </p>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Seller: {vehicle.user?.name || "Unknown"}
-                    </p>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Condition: {vehicle.vehicle_condition || "N/A"}
-                    </p>
-                    <div className="flex justify-between gap-2">
-                      <button
-                        onClick={() => handleApproveVehicle(vehicle._id)}
-                        className="flex-1 flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                      >
-                        <CheckCircleIcon className="w-4 h-4 mr-2" />
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleRejectVehicle(vehicle._id)}
-                        className="flex-1 flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                      >
-                        <XCircleIcon className="w-4 h-4 mr-2" />
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Users Tab */}
-      {activeTab === "users" && (
-        <div>
-          {loading ? (
-            <div className="text-center py-8">Loading users...</div>
-          ) : users.length === 0 ? (
-            <div className="text-center p-8 bg-white rounded-lg shadow">
-              <p className="text-xl text-gray-600">No users found</p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {users.map((user) => (
-                <div
-                  key={user._id}
-                  className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md"
-                >
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">{user.name}</h2>
-                    <p className="text-sm text-gray-600">Email: {user.email}</p>
-                    <p className="text-sm text-gray-600">Role: {user.role}</p>
-                  </div>
-                  <select
-                    value={user.role}
-                    onChange={(e) => handleRoleUpdate(user._id, e.target.value)}
-                    className="px-3 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       )}
     </div>
   );
-}
+};
+
+export default SignIn;
