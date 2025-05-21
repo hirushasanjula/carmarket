@@ -162,7 +162,7 @@ const VehicleSelectionBar = () => {
         <div className="w-full max-w-xl mx-auto mb-10">
           <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-              Find Your Perfect Ride
+              Find Your Perfect Vehicle
             </span>
           </h1>
           <div className="bg-white rounded-2xl shadow-lg p-2 backdrop-blur-sm bg-white/80">

@@ -11,7 +11,7 @@ export default function Chatbot() {
   const [messages, setMessages] = useState([
     { 
       sender: "bot", 
-      text: "Hi! How can I assist you with CarMarket today?",
+      text: "Hi! How can I assist you with VehicleMarket today?",
       timestamp: new Date()
     },
   ]);
@@ -103,7 +103,7 @@ export default function Chatbot() {
           <div className="flex justify-between items-center p-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg">
             <div className="flex items-center space-x-2">
               <MessageCircle size={18} />
-              <span className="font-medium">CarMarket Assistant</span>
+              <span className="font-medium">VehicleMarket Assistant</span>
             </div>
             <div className="flex items-center space-x-2">
               <button 
