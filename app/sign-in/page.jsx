@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
-import { AlertMessage } from "../../../components/AlertMessage"; // Make sure path is correct
+import { AlertMessage } from "../../components/AlertMessage"; 
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession({
