@@ -26,12 +26,12 @@ export async function POST(request) {
 
     // Optional: Post-process to ensure relevance
     if (!reply.toLowerCase().includes("carmarket") && !reply.match(/sell|buy|message|listing|sign/i)) {
-      reply = "I’m here to help with CarMarket! Could you clarify your question about buying, selling, or messaging about cars?";
+      reply = "I’m here to help with VehicleMarket! Could you clarify your question about buying, selling, or messaging about vehicles?";
     }
 
     return NextResponse.json({ reply });
   } catch (error) {
     console.error("Chatbot error:", error);
-    return NextResponse.json({ reply: "Sorry, I couldn’t process that. How can I assist with CarMarket?" }, { status: 500 });
+    return NextResponse.json({ reply: "Sorry, I couldn’t process that. How can I assist with VehicleMarket?" }, { status: 500 });
   }
 }
